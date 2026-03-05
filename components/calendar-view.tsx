@@ -123,6 +123,14 @@ export default function CalendarView({ trades }: CalendarViewProps) {
 
   const daysInMonth = useMemo(() => getDaysInMonth(currentDate), [currentDate, trades]);
 
+  const weeks = useMemo(() => {
+    const chunked: DayStats[][] = [];
+    for (let i = 0; i < daysInMonth.length; i += 7) {
+      chunked.push(daysInMonth.slice(i, i + 7));
+    }
+    return chunked;
+  }, [daysInMonth]);
+
   // Calculate monthly stats - using base currency
   const monthlyStats = useMemo(() => {
     const year = currentDate.getFullYear();
@@ -161,65 +169,88 @@ export default function CalendarView({ trades }: CalendarViewProps) {
   const weekDays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
   return (
-    <div className="w-full bg-background">
+    <div className="w-full bg-card/90 text-foreground">
       {/* Calendar Header */}
-      <div className="px-3 sm:px-4 lg:px-6 py-4 border-b border-border">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-          {/* Left Controls */}
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={handleToday}
-              variant="outline"
-              className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-transparent"
-            >
-              Today
-            </Button>
-            <div className="flex items-center gap-1">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 border-b border-border bg-gradient-to-r from-background/80 via-background/60 to-background/40">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Left: Title + Month Controls */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold tracking-tight">
+                Monthly P&amp;L
+              </h2>
+              <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] sm:text-xs uppercase tracking-wide text-muted-foreground">
+                Calendar view
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
               <Button
-                onClick={handlePrevMonth}
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 sm:h-9 sm:w-9"
+                onClick={handleToday}
+                variant="outline"
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-background/40 border-border/60"
               >
-                <ChevronLeft className="w-4 h-4" />
+                Today
               </Button>
-              <h2 className="text-lg sm:text-xl font-bold text-foreground min-w-max px-2">{monthName}</h2>
-              <Button
-                onClick={handleNextMonth}
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 sm:h-9 sm:w-9"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1 rounded-full bg-background/60 px-1 py-1 border border-border/60">
+                <Button
+                  onClick={handlePrevMonth}
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 sm:h-8 sm:w-8"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <p className="text-sm sm:text-base font-medium px-1 min-w-max">
+                  {monthName}
+                </p>
+                <Button
+                  onClick={handleNextMonth}
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 sm:h-8 sm:w-8"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Right Stats - All values in base currency */}
-          <div className="flex items-center gap-3 sm:gap-5 text-xs sm:text-sm flex-wrap">
-            <div className="flex flex-col">
-              <span className="text-muted-foreground">Gross P&L ({BASE_CURRENCY}):</span>
-              <span className={`font-bold ${monthlyStats.monthGrossPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {baseCurrencySymbol}{monthlyStats.monthGrossPnL.toFixed(2)}
+          {/* Right: Monthly Summary - All values in base currency */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs sm:text-sm justify-start sm:justify-end">
+            <div className="flex flex-col items-start sm:items-end">
+              <span className="text-muted-foreground">Monthly:</span>
+              <span
+                className={`text-sm sm:text-base font-semibold ${
+                  monthlyStats.monthPnL >= 0 ? 'text-blue-400' : 'text-red-400'
+                }`}
+              >
+                {baseCurrencySymbol}
+                {monthlyStats.monthPnL.toFixed(2)}
+              </span>
+            </div>
+            <div className="hidden sm:flex flex-col items-end">
+              <span className="text-muted-foreground">Gross P&amp;L:</span>
+              <span
+                className={`text-xs sm:text-sm font-medium ${
+                  monthlyStats.monthGrossPnL >= 0 ? 'text-blue-300' : 'text-red-300'
+                }`}
+              >
+                {baseCurrencySymbol}
+                {monthlyStats.monthGrossPnL.toFixed(2)}
               </span>
             </div>
             {monthlyStats.monthCharges > 0 && (
-              <div className="flex flex-col">
+              <div className="flex flex-col items-end">
                 <span className="text-muted-foreground">Brokerage:</span>
-                <span className="font-bold text-orange-400">
-                  -{baseCurrencySymbol}{monthlyStats.monthCharges.toFixed(2)}
+                <span className="text-xs sm:text-sm font-medium text-orange-400">
+                  -{baseCurrencySymbol}
+                  {monthlyStats.monthCharges.toFixed(2)}
                 </span>
               </div>
             )}
-            <div className="flex flex-col">
-              <span className="text-muted-foreground">Net P&L ({BASE_CURRENCY}):</span>
-              <span className={`font-bold ${monthlyStats.monthPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {baseCurrencySymbol}{monthlyStats.monthPnL.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col items-end">
               <span className="text-muted-foreground">Trading days:</span>
-              <span className="font-bold text-foreground">{monthlyStats.tradingDays}</span>
+              <span className="font-semibold">{monthlyStats.tradingDays}</span>
             </div>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <Settings2 className="w-4 h-4" />
@@ -230,68 +261,156 @@ export default function CalendarView({ trades }: CalendarViewProps) {
 
       {/* Calendar Grid */}
       <div className="overflow-x-auto">
-        <div className="min-w-max">
+        <div className="min-w-max px-4 sm:px-6 lg:px-8 py-4 space-y-3">
           {/* Weekday Headers */}
-          <div className="grid grid-cols-7 border-b border-border">
-            {weekDays.map(day => (
-              <div key={day} className="border-r border-border last:border-r-0 p-2 sm:p-3 lg:p-4 bg-muted/30">
-                <p className="text-xs sm:text-sm font-semibold text-muted-foreground">{day}</p>
+          <div className="grid grid-cols-8 gap-2 mb-2">
+            {weekDays.map((day) => (
+              <div
+                key={day}
+                className="rounded-xl bg-background/60 px-2 sm:px-3 lg:px-4 py-2 flex items-center"
+              >
+                <p className="text-[11px] sm:text-xs font-semibold tracking-wide text-muted-foreground">
+                  {day}
+                </p>
               </div>
             ))}
+            <div className="rounded-xl bg-background/80 px-2 sm:px-3 lg:px-4 py-2 flex items-center justify-end">
+              <p className="text-[11px] sm:text-xs font-semibold tracking-wide text-muted-foreground">
+                Weekly
+              </p>
+            </div>
           </div>
 
-          {/* Calendar Days */}
-          <div className="grid grid-cols-7">
-            {daysInMonth.map((day, index) => {
-              const dayNum = day.dayOfMonth;
-              const parsed = parseLocalDate(day.date);
-              const isCurrentMonthDay =
-                parsed.month === currentDate.getMonth() &&
-                parsed.year === currentDate.getFullYear();
+          {/* Calendar Weeks with Weekly Summary */}
+          <div className="grid grid-cols-8 gap-2">
+            {weeks.map((week, weekIndex) => {
+              const weekPnL = week.reduce((sum, day) => {
+                const parsed = parseLocalDate(day.date);
+                const isCurrentMonthDay =
+                  parsed.month === currentDate.getMonth() &&
+                  parsed.year === currentDate.getFullYear();
+                return isCurrentMonthDay ? sum + day.pnl : sum;
+              }, 0);
+
+              const weekTradingDays = week.reduce((sum, day) => {
+                const parsed = parseLocalDate(day.date);
+                const isCurrentMonthDay =
+                  parsed.month === currentDate.getMonth() &&
+                  parsed.year === currentDate.getFullYear();
+                return isCurrentMonthDay && day.tradeCount > 0 ? sum + 1 : sum;
+              }, 0);
 
               return (
-                <div
-                  key={`${day.date}-${index}`}
-                  className={`border-r border-b border-border last-row:border-b-0 ${index % 7 === 6 ? 'border-r-0' : ''} min-h-32 sm:min-h-40 lg:min-h-48 p-2 sm:p-3 lg:p-4 relative transition-colors ${
-                    day.isToday ? 'bg-primary/10' : isCurrentMonthDay ? 'bg-background' : 'bg-muted/20'
-                  }`}
-                >
-                  {/* Day Number */}
-                  <div className="relative">
-                    {day.isToday && (
-                      <div className="absolute -left-2 -top-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary flex items-center justify-center">
-                        <span className="text-xs sm:text-sm font-bold text-primary-foreground">{dayNum}</span>
-                      </div>
-                    )}
-                    {!day.isToday && (
-                      <p className={`text-xs sm:text-sm font-semibold mb-1 sm:mb-2 ${isCurrentMonthDay ? 'text-foreground' : 'text-muted-foreground'}`}>
-                        {dayNum}
-                      </p>
-                    )}
-                  </div>
+                <React.Fragment key={weekIndex}>
+                  {week.map((day, index) => {
+                    const dayNum = day.dayOfMonth;
+                    const parsed = parseLocalDate(day.date);
+                    const isCurrentMonthDay =
+                      parsed.month === currentDate.getMonth() &&
+                      parsed.year === currentDate.getFullYear();
 
-                  {/* Trade Data - shown in base currency */}
-                  {day.tradeCount > 0 && (
-                    <div className={`rounded-lg p-2 sm:p-3 text-xs sm:text-sm ${
-                      day.pnl >= 0
-                        ? 'bg-green-500/10 border border-green-500/30'
-                        : 'bg-red-500/10 border border-red-500/30'
-                    }`}>
-                      {day.charges > 0 && (
-                        <p className={`text-[10px] sm:text-xs mb-0.5 ${day.grossPnl >= 0 ? 'text-green-400/70' : 'text-red-400/70'}`}>
-                          G: {day.grossPnl >= 0 ? '+' : ''}{baseCurrencySymbol}{day.grossPnl.toFixed(2)}
-                        </p>
-                      )}
-                      <p className={`font-bold ${day.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {day.charges > 0 ? 'N: ' : ''}{day.pnl >= 0 ? '+' : ''}{baseCurrencySymbol}{day.pnl.toFixed(2)}
-                      </p>
-                      <p className="text-muted-foreground">Trades: {day.tradeCount}</p>
+                    return (
+                      <div
+                        key={`${day.date}-${index}`}
+                        className={`min-h-24 sm:min-h-28 lg:min-h-32 p-2 sm:p-3 lg:p-4 rounded-xl relative transition-colors ${
+                          day.isToday
+                            ? 'bg-primary/15 ring-1 ring-primary/60'
+                            : isCurrentMonthDay
+                              ? 'bg-background/50 hover:bg-background/80'
+                              : 'bg-muted/20 opacity-60'
+                        }`}
+                      >
+                        {/* Day Number */}
+                        <div className="relative mb-1.5 sm:mb-2">
+                          {day.isToday ? (
+                            <div className="inline-flex items-center justify-center rounded-full bg-primary px-2 py-0.5">
+                              <span className="text-[11px] sm:text-xs font-semibold text-primary-foreground">
+                                {dayNum}
+                              </span>
+                            </div>
+                          ) : (
+                            <p
+                              className={`text-[11px] sm:text-xs font-semibold ${
+                                isCurrentMonthDay ? 'text-foreground' : 'text-muted-foreground'
+                              }`}
+                            >
+                              {dayNum}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Trade Data - shown in base currency */}
+                        {day.tradeCount > 0 && (
+                          <div
+                            className={`rounded-lg border px-2 py-1.5 sm:px-2.5 sm:py-2 text-[11px] sm:text-xs ${
+                              day.pnl >= 0
+                                ? 'bg-blue-500/10 border-blue-500/30'
+                                : 'bg-red-500/10 border-red-500/30'
+                            }`}
+                          >
+                            {day.charges > 0 && (
+                              <p
+                                className={`mb-0.5 ${
+                                  day.grossPnl >= 0 ? 'text-blue-300' : 'text-red-300'
+                                }`}
+                              >
+                                G: {day.grossPnl >= 0 ? '+' : ''}
+                                {baseCurrencySymbol}
+                                {day.grossPnl.toFixed(2)}
+                              </p>
+                            )}
+                            <p
+                              className={`font-semibold ${
+                                day.pnl >= 0 ? 'text-blue-400' : 'text-red-400'
+                              }`}
+                            >
+                              {day.charges > 0 ? 'N: ' : ''}
+                              {day.pnl >= 0 ? '+' : ''}
+                              {baseCurrencySymbol}
+                              {day.pnl.toFixed(2)}
+                            </p>
+                            <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">
+                              Trades: {day.tradeCount}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Weekly summary column */}
+                  <div className="min-h-24 sm:min-h-28 lg:min-h-32 p-2 sm:p-3 lg:p-4 rounded-xl bg-background/60 border border-border/70 flex flex-col justify-between">
+                    <div className="text-[10px] sm:text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                      Weekly
                     </div>
-                  )}
-                </div>
+                    <div
+                      className={`text-sm sm:text-base font-semibold ${
+                        weekPnL >= 0 ? 'text-blue-400' : 'text-red-400'
+                      }`}
+                    >
+                      {baseCurrencySymbol}
+                      {weekPnL.toFixed(2)}
+                    </div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">
+                      {weekTradingDays} traded day{weekTradingDays === 1 ? '' : 's'}
+                    </div>
+                  </div>
+                </React.Fragment>
               );
             })}
           </div>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="border-t border-border px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-center gap-6 bg-background/60">
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+          <span className="w-2 h-2 rounded-full bg-blue-400" />
+          <span>Profit</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+          <span className="w-2 h-2 rounded-full bg-red-400" />
+          <span>Loss</span>
         </div>
       </div>
     </div>

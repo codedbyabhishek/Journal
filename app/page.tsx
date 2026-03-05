@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from "react";
 import { TradeProvider } from '@/lib/trade-context';
 import { SettingsProvider } from '@/lib/settings-context';
 import { IdeasProvider } from '@/lib/ideas-context';
@@ -29,6 +29,52 @@ type Page = 'dashboard' | 'add-trade' | 'log' | 'analytics' | 'profit-loss' | 'w
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+
+  // Restore last visited page on load so refresh doesn't reset to dashboard
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash.replace('#', '');
+    const stored = window.localStorage.getItem('td-last-page');
+    const allowedPages: Page[] = [
+      'dashboard',
+      'add-trade',
+      'log',
+      'analytics',
+      'profit-loss',
+      'weekly-review',
+      'data-utilities',
+      'ideas',
+      'add-idea',
+      'advanced-analytics',
+      'goals',
+      'search',
+      'reports',
+      'emotion-analyzer',
+    ];
+
+    // Highest priority: URL hash (so /#analytics refresh stays on analytics)
+    if (hash && (allowedPages as string[]).includes(hash)) {
+      setCurrentPage(hash as Page);
+      window.localStorage.setItem('td-last-page', hash);
+      return;
+    }
+
+    // Fallback: last page from localStorage
+    if (stored && (allowedPages as string[]).includes(stored)) {
+      setCurrentPage(stored as Page);
+    }
+  }, []);
+
+  // Persist current page so it survives refresh
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('td-last-page', currentPage);
+    // Keep URL hash in sync, but stay on same "/" route
+    const hash = `#${currentPage}`;
+    if (window.location.hash !== hash) {
+      window.history.replaceState(null, '', hash);
+    }
+  }, [currentPage]);
 
   const renderPage = () => {
     switch (currentPage) {

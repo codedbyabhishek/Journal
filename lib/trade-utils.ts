@@ -78,15 +78,38 @@ export function convertToBaseCurrency(pnl: number, currency: Currency, exchangeR
 }
 
 /**
- * Calculate Profit/Loss for a trade
- * @param entryPrice - Entry price of the trade
- * @param exitPrice - Exit price of the trade
- * @param quantity - Quantity/shares traded
- * @param position - Buy or Sell position
- * @param fees - Trading fees incurred
- * @returns Net P&L after fees
+ * Calculate Profit/Loss for a trade.
+ *
+ * Overloads:
+ * - From a `Trade` object: returns the stored net P&L (`trade.pnl`)
+ * - From raw parameters: computes gross P&L from prices/quantity and subtracts fees
  */
-export function calculatePnL(entryPrice: number, exitPrice: number, quantity: number, position: 'Buy' | 'Sell', fees: number): number {
+export function calculatePnL(trade: Trade): number;
+export function calculatePnL(
+  entryPrice: number,
+  exitPrice: number,
+  quantity: number,
+  position: 'Buy' | 'Sell',
+  fees: number
+): number;
+export function calculatePnL(
+  arg1: Trade | number,
+  arg2?: number,
+  arg3?: number,
+  arg4?: 'Buy' | 'Sell',
+  arg5?: number
+): number {
+  // Trade overload – use stored net P&L for consistency across the app
+  if (typeof arg1 === 'object') {
+    return arg1.pnl;
+  }
+
+  const entryPrice = arg1;
+  const exitPrice = arg2 ?? 0;
+  const quantity = arg3 ?? 0;
+  const position = arg4 ?? 'Buy';
+  const fees = arg5 ?? 0;
+
   let grossPnL = 0;
   if (position === 'Buy') {
     grossPnL = (exitPrice - entryPrice) * quantity;
@@ -96,18 +119,40 @@ export function calculatePnL(entryPrice: number, exitPrice: number, quantity: nu
   }
   return grossPnL - fees;
 }
-
+ 
 /**
- * Calculate Risk-Reward Factor (R-Factor)
- * Ratio of profit/loss to risk taken
- * @param pnl - Total profit/loss
- * @param stopLoss - Stop loss price level
- * @param entryPrice - Entry price
- * @param position - Buy or Sell
- * @param quantity - Trade quantity
- * @returns R-Factor (positive = reward multiple, negative = risk multiple)
+ * Calculate Risk-Reward Factor (R-Factor).
+ *
+ * Overloads:
+ * - From a `Trade` object: returns the stored `rFactor`
+ * - From raw parameters: derives R from P&L and price/quantity risk
  */
-export function calculateRFactor(pnl: number, stopLoss: number, entryPrice: number, position: 'Buy' | 'Sell', quantity: number): number {
+export function calculateRFactor(trade: Trade): number;
+export function calculateRFactor(
+  pnl: number,
+  stopLoss: number,
+  entryPrice: number,
+  position: 'Buy' | 'Sell',
+  quantity: number
+): number;
+export function calculateRFactor(
+  arg1: Trade | number,
+  arg2?: number,
+  arg3?: number,
+  arg4?: 'Buy' | 'Sell',
+  arg5?: number
+): number {
+  // Trade overload – use stored R-multiple for consistency
+  if (typeof arg1 === 'object') {
+    return arg1.rFactor;
+  }
+
+  const pnl = arg1;
+  const stopLoss = arg2 ?? 0;
+  const entryPrice = arg3 ?? 0;
+  const position = arg4 ?? 'Buy';
+  const quantity = arg5 ?? 0;
+
   let risk = 0;
   if (position === 'Buy') {
     risk = Math.abs(entryPrice - stopLoss) * quantity;
@@ -126,7 +171,8 @@ export function calculateRFactor(pnl: number, stopLoss: number, entryPrice: numb
 export function getDayOfWeek(dateString: string): string {
   const date = new Date(dateString);
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  return days[date.getUTCDay()];
+  // Use local day-of-week so it matches the user's trading day
+  return days[date.getDay()];
 }
 
 /**

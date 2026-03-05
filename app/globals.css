@@ -236,6 +236,11 @@
   }
 }
 
+/* Next.js dev tools portal positioning */
+nextjs-portal {
+  left: 1px !important;
+}
+
 /* Cyberpunk theme enhancements */
 .cyberpunk, [data-theme="cyberpunk"] {
   /* Add subtle grid background pattern */

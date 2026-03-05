@@ -1,11 +1,16 @@
 /**
  * Performance Analytics Engine
- * Computes advanced trading metrics and performance analysis
+ * Computes advanced trading metrics and performance analysis.
+ *
+ * NOTE:
+ * - Uses stored P&L / base-currency P&L from `Trade` instead of
+ *   recomputing ad-hoc to keep calculations consistent with the
+ *   rest of the analytics layer.
  */
 
 import { Trade } from '@/lib/types';
-import { calculatePnL, calculateRFactor } from '@/lib/trade-utils';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
+import { getTradeBasePnL } from '@/lib/trade-utils';
+import { format, startOfWeek } from 'date-fns';
 
 export interface PerformanceMetrics {
   weeklyPnL: Record<string, number>;
@@ -25,11 +30,12 @@ export function calculateWeeklyPnL(trades: Trade[]): Record<string, number> {
   const weeklyPnL: Record<string, number> = {};
   
   trades.forEach((trade) => {
-    const date = new Date(trade.entryDate);
+    const date = new Date(trade.date);
     const weekStart = startOfWeek(date);
     const weekKey = format(weekStart, 'yyyy-MM-dd');
     
-    weeklyPnL[weekKey] = (weeklyPnL[weekKey] || 0) + calculatePnL(trade);
+    // Use base-currency P&L to avoid mixing currencies
+    weeklyPnL[weekKey] = (weeklyPnL[weekKey] || 0) + getTradeBasePnL(trade);
   });
   
   return Object.fromEntries(
@@ -46,10 +52,10 @@ export function calculateMonthlyPnL(trades: Trade[]): Record<string, number> {
   const monthlyPnL: Record<string, number> = {};
   
   trades.forEach((trade) => {
-    const date = new Date(trade.entryDate);
+    const date = new Date(trade.date);
     const monthKey = format(date, 'yyyy-MM');
     
-    monthlyPnL[monthKey] = (monthlyPnL[monthKey] || 0) + calculatePnL(trade);
+    monthlyPnL[monthKey] = (monthlyPnL[monthKey] || 0) + getTradeBasePnL(trade);
   });
   
   return Object.fromEntries(
@@ -63,16 +69,16 @@ export function calculateMonthlyPnL(trades: Trade[]): Record<string, number> {
  */
 export function calculateEquityCurve(trades: Trade[]): Array<{ date: string; equity: number }> {
   const sorted = [...trades].sort((a, b) => 
-    new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
+    new Date(a.date).getTime() - new Date(b.date).getTime()
   );
   
   const curve: Array<{ date: string; equity: number }> = [];
   let cumulativePnL = 0;
   
   sorted.forEach((trade) => {
-    cumulativePnL += calculatePnL(trade);
+    cumulativePnL += getTradeBasePnL(trade);
     curve.push({
-      date: format(new Date(trade.entryDate), 'yyyy-MM-dd'),
+      date: format(new Date(trade.date), 'yyyy-MM-dd'),
       equity: cumulativePnL
     });
   });
@@ -88,11 +94,17 @@ export function calculateBestTradingHours(trades: Trade[]): Record<string, numbe
   const hourCounts: Record<string, number> = {};
   
   trades.forEach((trade) => {
-    const date = new Date(trade.entryDate);
-    const hour = date.getHours();
+    // If we have an explicit entryTime, prefer that for hour bucketing.
+    let hour: number;
+    if (trade.entryTime) {
+      hour = parseInt(trade.entryTime.split(':')[0], 10);
+    } else {
+      const date = new Date(trade.date);
+      hour = date.getHours();
+    }
     const hourKey = `${hour}:00`;
     
-    hourPnL[hourKey] = (hourPnL[hourKey] || 0) + calculatePnL(trade);
+    hourPnL[hourKey] = (hourPnL[hourKey] || 0) + getTradeBasePnL(trade);
     hourCounts[hourKey] = (hourCounts[hourKey] || 0) + 1;
   });
   
@@ -113,10 +125,10 @@ export function calculateBestTradingDays(trades: Trade[]): Record<string, number
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   
   trades.forEach((trade) => {
-    const date = new Date(trade.entryDate);
+    const date = new Date(trade.date);
     const dayName = dayNames[date.getDay()];
     
-    dayPnL[dayName] = (dayPnL[dayName] || 0) + calculatePnL(trade);
+    dayPnL[dayName] = (dayPnL[dayName] || 0) + getTradeBasePnL(trade);
   });
   
   return dayPnL;
@@ -149,7 +161,7 @@ export function calculateMonthlyWinRate(trades: Trade[]): Record<string, number>
   const monthStats: Record<string, { wins: number; total: number }> = {};
   
   trades.forEach((trade) => {
-    const date = new Date(trade.entryDate);
+    const date = new Date(trade.date);
     const monthKey = format(date, 'yyyy-MM');
     
     if (!monthStats[monthKey]) {
@@ -157,7 +169,7 @@ export function calculateMonthlyWinRate(trades: Trade[]): Record<string, number>
     }
     
     monthStats[monthKey].total++;
-    if (calculatePnL(trade) > 0) {
+    if (getTradeBasePnL(trade) > 0) {
       monthStats[monthKey].wins++;
     }
   });
@@ -177,14 +189,15 @@ export function calculateAverageTradeSize(trades: Trade[]): Record<string, numbe
   const monthStats: Record<string, { total: number; count: number }> = {};
   
   trades.forEach((trade) => {
-    const date = new Date(trade.entryDate);
+    const date = new Date(trade.date);
     const monthKey = format(date, 'yyyy-MM');
     
     if (!monthStats[monthKey]) {
       monthStats[monthKey] = { total: 0, count: 0 };
     }
     
-    monthStats[monthKey].total += Math.abs(calculatePnL(trade));
+    // Use base-currency magnitude so averages aren't skewed by mixed currencies
+    monthStats[monthKey].total += Math.abs(getTradeBasePnL(trade));
     monthStats[monthKey].count++;
   });
   

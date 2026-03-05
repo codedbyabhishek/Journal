@@ -133,37 +133,6 @@ export function TradeProvider({ children }: { children: React.ReactNode }) {
     initializeTrades();
   }, []);
 
-  /**
-   * Effect: Persist trades to IndexedDB whenever the trades array changes
-   * Only saves after initial load is complete
-   */
-  useEffect(() => {
-    if (!isLoading && trades.length > 0) {
-      const persistToDB = async () => {
-        try {
-          // Store all trades in IndexedDB
-          for (const trade of trades) {
-            await putToDB(STORE_NAMES.TRADES, trade);
-          }
-
-          // Update storage percentage
-          const dbSize = await getDBSize();
-          if (dbSize.quota > 0) {
-            setStoragePercentage(dbSize.percentage);
-          }
-
-          setError(null);
-        } catch (err) {
-          const message = err instanceof Error ? err.message : 'Failed to persist trades';
-          console.error('[v0] Persistence error:', err);
-          setError(message);
-        }
-      };
-
-      persistToDB();
-    }
-  }, [trades, isLoading]);
-
   const addTrade = (trade: Trade) => {
     try {
       if (!trade.id || !trade.date || !trade.symbol) {
@@ -173,12 +142,19 @@ export function TradeProvider({ children }: { children: React.ReactNode }) {
       setTrades(updated);
       
       // Persist to IndexedDB immediately
-      putToDB(STORE_NAMES.TRADES, trade).catch(err => {
-        console.error('[v0] Failed to save trade to IndexedDB:', err);
-        setError('Failed to save trade');
-      });
-      
-      setError(null);
+      putToDB(STORE_NAMES.TRADES, trade)
+        .then(async () => {
+          // Refresh storage usage stats after write
+          const dbSize = await getDBSize();
+          if (dbSize.quota > 0) {
+            setStoragePercentage(dbSize.percentage);
+          }
+          setError(null);
+        })
+        .catch(err => {
+          console.error('[v0] Failed to save trade to IndexedDB:', err);
+          setError('Failed to save trade');
+        });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to add trade';
       console.error('[v0] Add trade error:', message);
@@ -193,12 +169,18 @@ export function TradeProvider({ children }: { children: React.ReactNode }) {
       setTrades(updated);
       
       // Delete from IndexedDB immediately
-      deleteFromDB(STORE_NAMES.TRADES, id).catch(err => {
-        console.error('[v0] Failed to delete trade from IndexedDB:', err);
-        setError('Failed to delete trade');
-      });
-      
-      setError(null);
+      deleteFromDB(STORE_NAMES.TRADES, id)
+        .then(async () => {
+          const dbSize = await getDBSize();
+          if (dbSize.quota > 0) {
+            setStoragePercentage(dbSize.percentage);
+          }
+          setError(null);
+        })
+        .catch(err => {
+          console.error('[v0] Failed to delete trade from IndexedDB:', err);
+          setError('Failed to delete trade');
+        });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete trade';
       console.error('[v0] Delete trade error:', message);
@@ -216,12 +198,18 @@ export function TradeProvider({ children }: { children: React.ReactNode }) {
       setTrades(updated);
       
       // Update in IndexedDB immediately
-      putToDB(STORE_NAMES.TRADES, updatedTrade).catch(err => {
-        console.error('[v0] Failed to update trade in IndexedDB:', err);
-        setError('Failed to update trade');
-      });
-      
-      setError(null);
+      putToDB(STORE_NAMES.TRADES, updatedTrade)
+        .then(async () => {
+          const dbSize = await getDBSize();
+          if (dbSize.quota > 0) {
+            setStoragePercentage(dbSize.percentage);
+          }
+          setError(null);
+        })
+        .catch(err => {
+          console.error('[v0] Failed to update trade in IndexedDB:', err);
+          setError('Failed to update trade');
+        });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update trade';
       console.error('[v0] Update trade error:', message);

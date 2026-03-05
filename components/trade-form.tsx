@@ -4,13 +4,14 @@ import React from "react"
 import { useState } from 'react';
 import { useTrades } from '@/lib/trade-context';
 import { convertFormToTrade } from '@/lib/trade-utils';
-import { validateTradeForm, sanitizeString } from '@/lib/validation';
+import { validateTradeForm, sanitizeString, validateImageFile } from '@/lib/validation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Plus, Loader2, Upload, X } from 'lucide-react';
 import { TradeFormData, Currency } from '@/lib/types';
 import { calculatePnL, calculateRFactor, CURRENCY_SYMBOLS, getTradeOutcome } from '@/lib/trade-utils';
 import { ScreenshotViewer } from './screenshot-viewer';
+import { useToast } from '@/hooks/use-toast';
 
 interface TradeFormProps {
   onSuccess?: () => void;
@@ -18,6 +19,7 @@ interface TradeFormProps {
 
 export default function TradeForm({ onSuccess }: TradeFormProps) {
   const { addTrade } = useTrades();
+  const { toast } = useToast();
   // Form data state
   const [formData, setFormData] = useState<TradeFormData>({
     date: new Date().toISOString().split('T')[0],
@@ -79,44 +81,76 @@ export default function TradeForm({ onSuccess }: TradeFormProps) {
       if (items[i].type.indexOf('image') !== -1) {
         e.preventDefault();
         const file = items[i].getAsFile();
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const result = event.target?.result as string;
-            if (type === 'before') {
-              setBeforeScreenshot(result);
-            } else {
-              setAfterScreenshot(result);
-            }
-          };
-          reader.readAsDataURL(file);
+        if (!file) continue;
+
+        const validation = validateImageFile(file);
+        if (!validation.valid) {
+          toast({
+            title: 'Invalid image',
+            description: validation.error ?? 'Please upload a valid screenshot (JPEG, PNG, WebP, max 5MB).',
+            variant: 'destructive',
+          });
+          continue;
         }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = event.target?.result as string;
+          if (type === 'before') {
+            setBeforeScreenshot(result);
+          } else {
+            setAfterScreenshot(result);
+          }
+        };
+        reader.readAsDataURL(file);
       }
     }
   };
 
   const handleBeforeScreenshot = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setBeforeScreenshot(result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      toast({
+        title: 'Invalid image',
+        description: validation.error ?? 'Please upload a valid screenshot (JPEG, PNG, WebP, max 5MB).',
+        variant: 'destructive',
+      });
+      e.target.value = '';
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      setBeforeScreenshot(result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleAfterScreenshot = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setAfterScreenshot(result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      toast({
+        title: 'Invalid image',
+        description: validation.error ?? 'Please upload a valid screenshot (JPEG, PNG, WebP, max 5MB).',
+        variant: 'destructive',
+      });
+      e.target.value = '';
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      setAfterScreenshot(result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const clearBeforeScreenshot = () => {

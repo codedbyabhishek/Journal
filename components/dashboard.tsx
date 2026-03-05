@@ -50,7 +50,7 @@ export default function Dashboard() {
           <GitHubSyncButton trades={trades} />
         </div>
 
-        {/* Stats Grid - All P&L values in base currency */}
+        {/* Stats & setup cards grid - All P&L values in base currency */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 w-full">
           <StatCard icon={Zap} title="Total Trades" value={stats.totalTrades} subtitle={`${stats.winRate}% win rate`} />
           <StatCard
@@ -69,10 +69,6 @@ export default function Dashboard() {
               subtitle="Total charges deducted"
             />
           )}
-        </div>
-
-        {/* Performance Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 lg:gap-4 w-full">
           <Card className="bg-card border-border">
             <CardHeader className="p-4 sm:p-6">
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -100,7 +96,12 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Quick Insights */}
+        {/* Calendar View */}
+        <div className="w-full border border-border rounded-lg bg-card overflow-hidden">
+          <CalendarView trades={trades} />
+        </div>
+
+        {/* Quick Insights below calendar */}
         <Card className="bg-card border-border w-full">
           <CardHeader className="p-3 sm:p-4 lg:p-6">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg lg:text-xl">
@@ -110,49 +111,64 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4">
             {trades.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No trades recorded yet. Start logging trades to get insights!</p>
+              <p className="text-sm text-muted-foreground">
+                No trades recorded yet. Start logging trades to get insights!
+              </p>
             ) : (
               <>
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-green-400 mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 rounded-full bg-green-400 mt-2 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-foreground">Win Rate: {stats.winRate}%</p>
-                    <p className="text-xs text-muted-foreground">You're winning {stats.winRate}% of your trades</p>
+                    <p className="text-xs sm:text-sm font-medium text-foreground">
+                      Win Rate: {stats.winRate}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      You're winning {stats.winRate}% of your trades
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-foreground">Average R-Factor: {stats.averageR.toFixed(2)}</p>
-                    <p className="text-xs text-muted-foreground">You risk {stats.averageR.toFixed(2)} units to make 1 unit on average</p>
+                    <p className="text-xs sm:text-sm font-medium text-foreground">
+                      Average R-Factor: {stats.averageR.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      You risk {stats.averageR.toFixed(2)} units to make 1 unit on average
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-yellow-400 mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-foreground">Net P&L: {baseCurrencySymbol}{stats.totalPnL.toFixed(2)} ({baseCurrency})</p>
-                    <p className="text-xs text-muted-foreground">Cumulative profit/loss after brokerage deductions</p>
+                    <p className="text-xs sm:text-sm font-medium text-foreground">
+                      Net P&L: {baseCurrencySymbol}
+                      {stats.totalPnL.toFixed(2)} ({baseCurrency})
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Cumulative profit/loss after brokerage deductions
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-orange-400 mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 rounded-full bg-orange-400 mt-2 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-foreground">Max Drawdown: {baseCurrencySymbol}{stats.maxDrawdown.toFixed(2)} ({baseCurrency})</p>
-                    <p className="text-xs text-muted-foreground">Your largest peak-to-trough decline</p>
+                    <p className="text-xs sm:text-sm font-medium text-foreground">
+                      Max Drawdown: {baseCurrencySymbol}
+                      {stats.maxDrawdown.toFixed(2)} ({baseCurrency})
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Your largest peak-to-trough decline
+                    </p>
                   </div>
                 </div>
               </>
             )}
           </CardContent>
         </Card>
-
-        {/* Calendar View */}
-        <div className="w-full border border-border rounded-lg bg-card overflow-hidden">
-          <CalendarView trades={trades} />
-        </div>
 
         {/* Getting Started */}
         {trades.length === 0 && (
