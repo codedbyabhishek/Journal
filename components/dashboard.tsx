@@ -38,9 +38,9 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="w-full min-h-screen flex flex-col bg-background overflow-hidden">
+    <div className="w-full min-w-0 flex flex-col bg-background">
       {/* Main content with responsive padding and proper spacing */}
-      <div className="flex-1 flex flex-col gap-3 sm:gap-4 lg:gap-6 w-full p-2 sm:p-4 lg:p-6 overflow-auto">
+      <div className="flex flex-col gap-3 sm:gap-4 lg:gap-6 w-full p-2 sm:p-4 lg:p-6">
         <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 lg:p-8 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent pointer-events-none" />
           <div className="relative z-10 flex items-start justify-between gap-4">

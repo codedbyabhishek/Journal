@@ -80,7 +80,7 @@ export default function TradeLog() {
       ) : (
         <>
           {/* Desktop Table */}
-          <div className="hidden md:block w-full min-w-0">
+          <div className="hidden lg:block w-full min-w-0">
             <Card className="bg-card border-border overflow-hidden">
               <div className="w-full overflow-x-auto">
               <table className="w-full min-w-[1100px] border-collapse">
@@ -148,7 +148,7 @@ export default function TradeLog() {
           </div>
 
           {/* Mobile & Tablet Card View */}
-          <div className="md:hidden space-y-2 sm:space-y-3">
+          <div className="lg:hidden space-y-2 sm:space-y-3">
             {filteredAndSortedTrades.map(trade => (
               <Card key={trade.id} className="bg-card border-border">
                 <CardContent className="p-4 space-y-3">
