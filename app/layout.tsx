@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { ServiceWorkerRegister } from '@/components/service-worker-register'
-import { ChunkRecovery } from '@/components/chunk-recovery'
 import { ThemeProvider } from '@/lib/theme-context'
 import { HydrationBoundary } from '@/components/hydration-boundary'
 import './globals.css'
@@ -62,7 +61,6 @@ export default function RootLayout({
         <HydrationBoundary>
           <ThemeProvider>
             <ErrorBoundary>
-              <ChunkRecovery />
               <ServiceWorkerRegister />
               {children}
             </ErrorBoundary>
