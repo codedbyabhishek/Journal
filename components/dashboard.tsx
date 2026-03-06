@@ -41,17 +41,29 @@ export default function Dashboard() {
     <div className="w-full min-h-screen flex flex-col bg-background overflow-hidden">
       {/* Main content with responsive padding and proper spacing */}
       <div className="flex-1 flex flex-col gap-3 sm:gap-4 lg:gap-6 w-full p-2 sm:p-4 lg:p-6 overflow-auto">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1 flex-1">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">Trading Dashboard</h1>
-            <p className="text-xs sm:text-sm lg:text-base text-muted-foreground">Your trading performance overview</p>
+        <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent pointer-events-none" />
+          <div className="relative z-10 flex items-start justify-between gap-4">
+            <div className="space-y-2 flex-1">
+              <p className="text-xs sm:text-sm uppercase tracking-wider text-primary font-semibold">Control Center</p>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">Trading Dashboard</h1>
+              <p className="text-xs sm:text-sm lg:text-base text-muted-foreground max-w-2xl">
+                Track outcomes, monitor risk, and review execution quality from one place.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <span className="text-xs px-2 py-1 rounded-md bg-secondary text-secondary-foreground">Total Trades: {stats.totalTrades}</span>
+                <span className="text-xs px-2 py-1 rounded-md bg-secondary text-secondary-foreground">Win Rate: {stats.winRate}%</span>
+                <span className="text-xs px-2 py-1 rounded-md bg-secondary text-secondary-foreground">Avg R: {stats.averageR.toFixed(2)}</span>
+              </div>
+            </div>
+            <div className="shrink-0">
+              <GitHubSyncButton trades={trades} />
+            </div>
           </div>
-          <GitHubSyncButton trades={trades} />
         </div>
 
         {/* Stats & setup cards grid - All P&L values in base currency */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
           <StatCard icon={Zap} title="Total Trades" value={stats.totalTrades} subtitle={`${stats.winRate}% win rate`} />
           <StatCard
             icon={TrendingUp}
@@ -69,7 +81,7 @@ export default function Dashboard() {
               subtitle="Total charges deducted"
             />
           )}
-          <Card className="bg-card border-border">
+          <Card className="bg-card border-border sm:col-span-2 lg:col-span-2">
             <CardHeader className="p-4 sm:p-6">
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <TrendingUp className="w-4 sm:w-5 h-4 sm:h-5 text-green-400 flex-shrink-0" />
@@ -82,7 +94,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border">
+          <Card className="bg-card border-border sm:col-span-2 lg:col-span-2">
             <CardHeader className="p-4 sm:p-6">
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <TrendingDown className="w-4 sm:w-5 h-4 sm:h-5 text-red-400 flex-shrink-0" />
