@@ -3,23 +3,12 @@
  * Handles offline functionality, caching, and background sync
  */
 
-const CACHE_NAME = 'trading-diary-v1';
-const RUNTIME_CACHE = 'trading-diary-runtime-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/globals.css'
-];
+const CACHE_NAME = 'trading-diary-v3';
+const RUNTIME_CACHE = 'trading-diary-runtime-v3';
 
-// Install event - cache static assets
+// Install event
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    }).catch(err => {
-      console.log('[SW] Install error:', err);
-    })
-  );
+  event.waitUntil(Promise.resolve());
   self.skipWaiting();
 });
 
@@ -39,7 +28,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - network first, fallback to cache
+// Fetch event - avoid stale HTML/documents
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   
@@ -48,40 +37,57 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For API calls, use network first
+  // Never cache API calls
   if (request.url.includes('/api/')) {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const cache = caches.open(RUNTIME_CACHE);
-            cache.then(c => c.put(request, response.clone()));
-          }
-          return response;
-        })
+        .then((response) => response)
         .catch(() => {
-          return caches.match(request).then((cachedResponse) => {
-            return cachedResponse || new Response('Offline - data unavailable', {
-              status: 503,
-              headers: { 'Content-Type': 'text/plain' }
-            });
+          return new Response('Offline - data unavailable', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain' }
           });
-        })
+        }),
     );
     return;
   }
 
-  // For regular assets, use cache first
+  // Navigation/document requests: network first, fallback to cached page
+  if (request.mode === 'navigate' || request.destination === 'document') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            void caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match(request);
+          return (
+            cached ||
+            new Response('Offline - page unavailable', {
+              status: 503,
+              headers: { 'Content-Type': 'text/plain' },
+            })
+          );
+        }),
+    );
+    return;
+  }
+
+  // Static assets: cache first with network fallback
   event.respondWith(
     caches.match(request).then((response) => {
-      return response || fetch(request).then((response) => {
-        if (response.ok && (request.method === 'GET')) {
+      return response || fetch(request).then((networkResponse) => {
+        if (networkResponse.ok && request.method === 'GET') {
           return caches.open(RUNTIME_CACHE).then((cache) => {
-            cache.put(request, response.clone());
-            return response;
+            cache.put(request, networkResponse.clone());
+            return networkResponse;
           });
         }
-        return response;
+        return networkResponse;
       }).catch(() => {
         return new Response('Offline - page unavailable', {
           status: 503,

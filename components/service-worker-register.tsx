@@ -5,19 +5,29 @@ import { initOfflineSync } from '@/lib/offline-sync';
 
 export function ServiceWorkerRegister() {
   useEffect(() => {
-    // Register service worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js', { scope: '/' })
-        .then((registration) => {
-          console.log('[PWA] Service Worker registered:', registration);
-        })
-        .catch((error) => {
-          console.error('[PWA] Service Worker registration failed:', error);
+    if (!('serviceWorker' in navigator)) return;
+
+    const enablePwa = process.env.NEXT_PUBLIC_ENABLE_PWA === 'true';
+
+    // Default behavior: keep PWA disabled to avoid stale-cache blank screens.
+    if (!enablePwa) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => {
+          void registration.unregister();
         });
+      });
+      return;
     }
 
-    // Initialize offline sync
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/' })
+      .then((registration) => {
+        console.log('[PWA] Service Worker registered:', registration);
+      })
+      .catch((error) => {
+        console.error('[PWA] Service Worker registration failed:', error);
+      });
+
     initOfflineSync().catch(err => {
       console.error('[PWA] Offline sync init failed:', err);
     });
