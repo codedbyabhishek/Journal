@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/server/auth';
-import { toServerErrorResponse } from '@/lib/server/error-map';
 
 export const runtime = 'nodejs';
 
@@ -14,7 +13,6 @@ export async function GET() {
     return NextResponse.json({ user });
   } catch (error) {
     console.error('[auth/me] error', error);
-    const mapped = toServerErrorResponse(error, 'Failed to get session.');
-    return NextResponse.json({ error: mapped.message }, { status: mapped.status });
+    return NextResponse.json({ error: 'Failed to get session.' }, { status: 500 });
   }
 }

@@ -23,29 +23,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const AUTH_API_TIMEOUT_MS = 12000;
 
 async function parseApiError(res: Response, fallback: string): Promise<string> {
-  let apiMessage: string | null = null;
-
   try {
     const body = await res.json();
-    apiMessage = typeof body?.error === 'string' ? body.error : null;
+    return body?.error || fallback;
   } catch {
-    apiMessage = null;
+    return fallback;
   }
-
-  if (res.status === 429) {
-    const retryAfter = Number(res.headers.get('Retry-After') || '0');
-    if (Number.isFinite(retryAfter) && retryAfter > 0) {
-      const waitMinutes = Math.ceil(retryAfter / 60);
-      return `Too many attempts. Please wait about ${waitMinutes} minute${waitMinutes === 1 ? '' : 's'} and try again.`;
-    }
-    return apiMessage || 'Too many attempts. Please wait before trying again.';
-  }
-
-  if (res.status === 503) {
-    return apiMessage || 'Service is temporarily unavailable. Please try again shortly.';
-  }
-
-  return apiMessage || fallback;
 }
 
 async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = AUTH_API_TIMEOUT_MS) {
@@ -76,18 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!res.ok) {
-        if (res.status === 401) {
-          setUser(null);
-          setError(null);
-          return;
-        }
-
-        const message = await parseApiError(
-          res,
-          'Unable to verify session right now. Please try again.'
-        );
         setUser(null);
-        setError(message);
         return;
       }
 
@@ -96,7 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
     } catch {
       setUser(null);
-      setError('Unable to connect to server. Please try again.');
     }
   };
 
