@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { TradeProvider } from '@/lib/trade-context';
 import { SettingsProvider } from '@/lib/settings-context';
 import { IdeasProvider } from '@/lib/ideas-context';
@@ -8,6 +9,7 @@ import { GoalsProvider } from '@/lib/goals-context';
 import { FiltersProvider } from '@/lib/filters-context';
 import { TemplatesProvider } from '@/lib/templates-context';
 import { HydrationBoundary } from '@/components/hydration-boundary';
+import AuthScreen from '@/components/auth-screen';
 import Sidebar from '@/components/sidebar';
 import MobileNav from '@/components/mobile-nav';
 import Dashboard from '@/components/dashboard';
@@ -28,6 +30,7 @@ import EmotionAnalyzer from '@/components/emotion-analyzer';
 type Page = 'dashboard' | 'add-trade' | 'log' | 'analytics' | 'profit-loss' | 'weekly-review' | 'data-utilities' | 'ideas' | 'add-idea' | 'advanced-analytics' | 'goals' | 'search' | 'reports' | 'emotion-analyzer';
 
 function AppContent() {
+  const { user, isLoading } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
 
   // Restore last visited page on load so refresh doesn't reset to dashboard
@@ -111,6 +114,18 @@ function AppContent() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthScreen />;
+  }
+
   return (
     <div className="flex h-dvh flex-col md:flex-row bg-background overflow-hidden">
       {/* Desktop Sidebar */}
@@ -133,19 +148,21 @@ function AppContent() {
 export default function Home() {
   return (
     <HydrationBoundary>
-      <SettingsProvider>
-        <TradeProvider>
-          <IdeasProvider>
-            <GoalsProvider>
-              <FiltersProvider>
-                <TemplatesProvider>
-                  <AppContent />
-                </TemplatesProvider>
-              </FiltersProvider>
-            </GoalsProvider>
-          </IdeasProvider>
-        </TradeProvider>
-      </SettingsProvider>
+      <AuthProvider>
+        <SettingsProvider>
+          <TradeProvider>
+            <IdeasProvider>
+              <GoalsProvider>
+                <FiltersProvider>
+                  <TemplatesProvider>
+                    <AppContent />
+                  </TemplatesProvider>
+                </FiltersProvider>
+              </GoalsProvider>
+            </IdeasProvider>
+          </TradeProvider>
+        </SettingsProvider>
+      </AuthProvider>
     </HydrationBoundary>
   );
 }

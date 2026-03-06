@@ -1,8 +1,0 @@
-"Date","Day","Symbol","Type","Setup","Position","Entry Price","Exit Price","Stop Loss","Quantity","Fees","P&L","R-Factor","Win/Loss","Confidence","Time Frame","Limit","Exit Level","Mistake Tag"
-"2026-02-06","Friday","SOLANA","Intraday","PINBAR","Buy","N/A","N/A","$100.00","2","$10.00","$150.00","1.80","Win","5","5m","L0.283","L0.382",""
-"2026-02-06","Friday","NIFTY","Intraday","0.382 Fib","Buy","N/A","N/A","$1000.00","130","$400.00","$-1600.00","-2.00","Loss","5","5m","L0.382","L0.283","Overtrading"
-"2026-02-05","Thursday","NIFTY","Intraday","0.382 Fib","Buy","N/A","N/A","$0.17","65","$27.00","$1092.00","1.90","Win","5","5m","L0.382","L0.786",""
-"2026-02-04","Wednesday","NIFTY","Intraday","0.382 Fib","Buy","N/A","N/A","$0.17","65","$133.00","$1059.00","1.50","Win","5","5m","L0.382","L0",""
-"2026-02-03","Tuesday","NIFTY","Intraday","0.382 Fib","Buy","N/A","N/A","$0.17","65","$68.00","$481.00","0.50","Win","5","5m","L0.382","L0","Early exit"
-"2026-02-02","Monday","NIFTY","Intraday","0.382 Fib","Buy","N/A","N/A","$0.17","65","$62.00","$-1524.00","-1.00","Loss","5","5m","L0.382","L0","No mistake (good loss)"
-"2026-02-01","Sunday","NIFTY","Intraday","0.382 Fib","Buy","N/A","N/A","$1000.00","65","$96.00","$819.00","1.00","Win","5","5m","L0.382","L0.702","Early exit"

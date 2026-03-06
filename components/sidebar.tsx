@@ -3,6 +3,7 @@
 import { BarChart3, PlusCircle, Table, LineChart, Settings, Calendar, TrendingUp, Lightbulb, Target, Search, Zap, FileText, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { useAuth } from '@/lib/auth-context';
 
 interface SidebarProps {
   currentPage: string;
@@ -10,6 +11,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
+  const { user, logout } = useAuth();
+
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'add-trade', label: 'Add Trade', icon: PlusCircle },
@@ -67,6 +70,18 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
         <div className="p-4 bg-sidebar-accent rounded-lg border border-sidebar-border">
           <p className="text-xs text-sidebar-foreground font-semibold">Tip</p>
           <p className="text-xs text-muted-foreground mt-2">Keep detailed notes on each trade to identify patterns and improve consistency.</p>
+        </div>
+        <div className="px-2 space-y-2">
+          <p className="text-xs text-muted-foreground truncate" title={user?.email || ''}>
+            {user?.email}
+          </p>
+          <button
+            type="button"
+            onClick={() => void logout()}
+            className="w-full text-left text-xs px-2 py-2 rounded-md border border-sidebar-border hover:bg-sidebar-accent"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </aside>
