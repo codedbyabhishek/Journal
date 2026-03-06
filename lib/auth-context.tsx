@@ -50,15 +50,28 @@ async function parseApiError(res: Response, fallback: string): Promise<string> {
 
 async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = AUTH_API_TIMEOUT_MS) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let timeoutRejectId: ReturnType<typeof setTimeout> | null = null;
 
   try {
-    return await fetch(url, {
+    const requestPromise = fetch(url, {
       ...init,
       signal: controller.signal,
     });
+
+    const timeoutPromise = new Promise<Response>((_, reject) => {
+      timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      // Some browsers/proxies can ignore abort; this guarantees settlement.
+      timeoutRejectId = setTimeout(
+        () => reject(new Error('Request timed out')),
+        timeoutMs + 250
+      );
+    });
+
+    return await Promise.race([requestPromise, timeoutPromise]);
   } finally {
-    clearTimeout(timeout);
+    if (timeoutId) clearTimeout(timeoutId);
+    if (timeoutRejectId) clearTimeout(timeoutRejectId);
   }
 }
 
