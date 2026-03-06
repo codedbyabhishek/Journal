@@ -296,7 +296,7 @@ export default function TradeForm({ onSuccess }: TradeFormProps) {
   };
 
   return (
-    <div className="flex-1 min-h-screen p-3 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full">
+    <div className="p-3 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full">
       <Card className="bg-card border-border">
         <CardHeader className="p-4 sm:p-6">
           <CardTitle className="text-xl sm:text-2xl lg:text-3xl">Add New Trade</CardTitle>

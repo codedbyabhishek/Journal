@@ -14,6 +14,8 @@ export default function AuthScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const isRateLimitError = !!error && error.toLowerCase().includes('too many');
+  const isServiceError = !!error && error.toLowerCase().includes('temporarily unavailable');
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -137,7 +139,19 @@ export default function AuthScreen() {
                 />
               </div>
 
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && (
+                <div
+                  className={`rounded-lg border px-3 py-2 text-sm ${
+                    isRateLimitError
+                      ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
+                      : isServiceError
+                      ? 'border-orange-500/40 bg-orange-500/10 text-orange-300'
+                      : 'border-red-500/40 bg-red-500/10 text-red-400'
+                  }`}
+                >
+                  {error}
+                </div>
+              )}
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Please wait...' : mode === 'login' ? 'Login' : 'Create Account'}

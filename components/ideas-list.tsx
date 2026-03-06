@@ -68,7 +68,7 @@ export default function IdeasList() {
   }, {} as Record<string, number>);
 
   return (
-    <div className="flex-1 overflow-auto min-h-screen flex flex-col">
+    <div className="w-full min-w-0 flex flex-col">
       <div className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
         {/* Header */}
         <div className="mb-6 sm:mb-8">

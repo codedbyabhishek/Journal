@@ -348,7 +348,7 @@ export default function Analytics() {
 
   // Main container with proper responsive padding and overflow handling
   return (
-    <div className="w-full min-h-screen flex flex-col gap-3 sm:gap-4 lg:gap-6 p-2 sm:p-4 lg:p-6 overflow-hidden">
+    <div className="w-full min-w-0 flex flex-col gap-3 sm:gap-4 lg:gap-6 p-2 sm:p-4 lg:p-6">
       <div className="space-y-1">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">Analytics</h1>
         <p className="text-xs sm:text-sm lg:text-base text-muted-foreground">Detailed analysis of your trading performance</p>

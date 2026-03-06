@@ -157,7 +157,7 @@ export default function ProfitLoss() {
     : null;
 
   return (
-    <div className="flex-1 overflow-auto min-h-screen flex flex-col">
+    <div className="w-full min-w-0 flex flex-col">
       <div className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Profit & Loss Summary</h2>
