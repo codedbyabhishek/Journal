@@ -3,7 +3,13 @@
 This project now supports:
 - Email/password signup + login
 - Session cookies
-- Server-side trade storage in MySQL
+- Server-side storage in MySQL for:
+  - Trades
+  - Ideas
+  - Goals
+  - Filters
+  - Templates
+  - Base currency settings
 
 ## 1. Prepare MySQL Database
 1. In Hostinger hPanel, create a MySQL database and user.
@@ -40,8 +46,13 @@ Use these commands:
 3. Login.
 4. Add a trade.
 5. Verify DB rows in `users`, `user_sessions`, and `trades` tables.
+6. Create one idea/goal/filter/template and check their tables too.
 
-## 6. Important Current Scope
-- Server persistence is implemented for **authentication and trades**.
-- Ideas/goals/filters/templates still use local browser storage currently.
-- If you want, next step is migrating those modules to MySQL too.
+## 6. Quick Troubleshooting
+If you don't see login/signup or other frontend changes:
+1. Make sure the latest code is actually deployed (new build from latest commit).
+2. Restart the Node app process after deploy.
+3. Check `https://your-domain/api/auth/me`:
+   - `401 {"user":null}` means new API is live and unauthenticated state is working.
+   - `404` means old build or wrong deployment target.
+4. Hard refresh browser (`Ctrl+Shift+R` or `Cmd+Shift+R`).

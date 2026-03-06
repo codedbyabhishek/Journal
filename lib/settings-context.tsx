@@ -1,13 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Currency } from './types';
-import { getFromDB, putToDB, migrateFromLocalStorage, STORE_NAMES } from './db-service';
+import { useAuth } from '@/lib/auth-context';
 
-/**
- * Settings Context Type
- * Manages user preferences including base currency for analytics display
- */
 interface SettingsContextType {
   baseCurrency: Currency;
   setBaseCurrency: (currency: Currency) => void;
@@ -15,69 +11,54 @@ interface SettingsContextType {
 
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-/**
- * SettingsProvider - Context provider for user settings
- * Persists base currency preference to IndexedDB
- */
+const DEFAULT_BASE_CURRENCY: Currency = 'INR';
+
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [baseCurrency, setBaseCurrencyState] = useState<Currency>('INR');
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const [baseCurrency, setBaseCurrencyState] = useState<Currency>(DEFAULT_BASE_CURRENCY);
 
-  /**
-   * Effect: Load settings from IndexedDB on mount
-   * Migrates from localStorage if this is the first load
-   */
   useEffect(() => {
-    const initializeSettings = async () => {
+    const load = async () => {
+      if (isAuthLoading) return;
+      if (!user) {
+        setBaseCurrencyState(DEFAULT_BASE_CURRENCY);
+        return;
+      }
+
       try {
-        // Migrate from localStorage (one-time operation)
-        const wasMigrated = await migrateFromLocalStorage(
-          'trading-journal-settings',
-          STORE_NAMES.SETTINGS,
-          (data) => ({ key: 'preferences', ...data })
-        );
-
-        if (wasMigrated) {
-          console.log('[IndexedDB] Settings migrated from localStorage');
-          localStorage.removeItem('trading-journal-settings');
+        const res = await fetch('/api/settings', { credentials: 'include', cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const stored = data?.settings?.baseCurrency;
+        if (stored) {
+          setBaseCurrencyState(stored as Currency);
         }
-
-        // Load settings from IndexedDB
-        const savedSettings = await getFromDB(STORE_NAMES.SETTINGS, 'preferences');
-        if (savedSettings && (savedSettings as any).baseCurrency) {
-          setBaseCurrencyState((savedSettings as any).baseCurrency);
-        }
-      } catch (err) {
-        console.error('[v0] Failed to load settings:', err);
+      } catch (error) {
+        console.error('[SettingsContext] Failed to load settings:', error);
       }
     };
 
-    initializeSettings();
-  }, []);
+    void load();
+  }, [user, isAuthLoading]);
 
-  /**
-   * Update base currency and persist to IndexedDB
-   */
   const setBaseCurrency = (currency: Currency) => {
     setBaseCurrencyState(currency);
-    putToDB(STORE_NAMES.SETTINGS, {
-      key: 'preferences',
-      baseCurrency: currency,
-    }).catch(err => {
-      console.error('[v0] Failed to save settings:', err);
+
+    if (!user) return;
+
+    void fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ key: 'baseCurrency', value: currency }),
+    }).catch((err) => {
+      console.error('[SettingsContext] Failed to save settings:', err);
     });
   };
 
-  return (
-    <SettingsContext.Provider value={{ baseCurrency, setBaseCurrency }}>
-      {children}
-    </SettingsContext.Provider>
-  );
+  return <SettingsContext.Provider value={{ baseCurrency, setBaseCurrency }}>{children}</SettingsContext.Provider>;
 }
 
-/**
- * Hook to use settings context
- * @throws Error if used outside of SettingsProvider
- */
 export function useSettings(): SettingsContextType {
   const context = useContext(SettingsContext);
   if (!context) {
