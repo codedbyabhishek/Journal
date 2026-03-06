@@ -150,16 +150,16 @@ export default function AuthScreen() {
       <div className="mx-auto mt-8 w-full max-w-6xl rounded-xl border border-border bg-card p-4 sm:p-6">
         <p className="mb-3 text-sm font-semibold text-muted-foreground">Quick Links</p>
         <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3 lg:grid-cols-4">
-          <Link className="underline underline-offset-4" href="/about-us">About Us</Link>
-          <Link className="underline underline-offset-4" href="/contact-us">Contact Us</Link>
+          <Link className="underline underline-offset-4" href="/about">About Us</Link>
+          <Link className="underline underline-offset-4" href="/contact">Contact Us</Link>
           <Link className="underline underline-offset-4" href="/faq">FAQ</Link>
-          <Link className="underline underline-offset-4" href="/privacy-policy">Privacy Policy</Link>
-          <Link className="underline underline-offset-4" href="/terms-and-conditions">Terms &amp; Conditions</Link>
-          <Link className="underline underline-offset-4" href="/cookie-policy">Cookie Policy</Link>
+          <Link className="underline underline-offset-4" href="/privacy">Privacy Policy</Link>
+          <Link className="underline underline-offset-4" href="/terms">Terms &amp; Conditions</Link>
+          <Link className="underline underline-offset-4" href="/cookies">Cookie Policy</Link>
           <Link className="underline underline-offset-4" href="/disclaimer">Disclaimer</Link>
-          <Link className="underline underline-offset-4" href="/account-settings">Account Settings</Link>
-          <Link className="underline underline-offset-4" href="/delete-account-data-request">Delete Account / Data Request</Link>
-          <Link className="underline underline-offset-4" href="/support-help-center">Support / Help Center</Link>
+          <Link className="underline underline-offset-4" href="/account">Account Settings</Link>
+          <Link className="underline underline-offset-4" href="/delete-account">Delete Account / Data Request</Link>
+          <Link className="underline underline-offset-4" href="/support">Support / Help Center</Link>
           <Link className="underline underline-offset-4" href="/404">404 Page</Link>
           <Link className="underline underline-offset-4" href="/sitemap.xml">Sitemap</Link>
         </div>

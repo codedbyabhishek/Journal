@@ -21,13 +21,16 @@ export function getDbPool(): Pool {
   }
 
   const host = requiredEnv('DB_HOST');
+  // Hostinger/MySQL users are often granted for 127.0.0.1 and not ::1.
+  // Using localhost can resolve to IPv6 (::1) and trigger access denied.
+  const normalizedHost = host === 'localhost' ? '127.0.0.1' : host;
   const user = requiredEnv('DB_USER');
   const password = requiredEnv('DB_PASSWORD');
   const database = requiredEnv('DB_NAME');
   const port = Number(process.env.DB_PORT || DEFAULT_DB_PORT);
 
   const pool = mysql.createPool({
-    host,
+    host: normalizedHost,
     user,
     password,
     database,
