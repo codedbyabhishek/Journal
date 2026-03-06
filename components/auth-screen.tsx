@@ -1,10 +1,10 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import SiteFooter from '@/components/site-footer';
 
 export default function AuthScreen() {
   const { login, signup, error, clearError } = useAuth();
@@ -147,23 +147,7 @@ export default function AuthScreen() {
         </Card>
       </div>
 
-      <div className="mx-auto mt-8 w-full max-w-6xl rounded-xl border border-border bg-card p-4 sm:p-6">
-        <p className="mb-3 text-sm font-semibold text-muted-foreground">Quick Links</p>
-        <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3 lg:grid-cols-4">
-          <Link className="underline underline-offset-4" href="/about">About Us</Link>
-          <Link className="underline underline-offset-4" href="/contact">Contact Us</Link>
-          <Link className="underline underline-offset-4" href="/faq">FAQ</Link>
-          <Link className="underline underline-offset-4" href="/privacy">Privacy Policy</Link>
-          <Link className="underline underline-offset-4" href="/terms">Terms &amp; Conditions</Link>
-          <Link className="underline underline-offset-4" href="/cookies">Cookie Policy</Link>
-          <Link className="underline underline-offset-4" href="/disclaimer">Disclaimer</Link>
-          <Link className="underline underline-offset-4" href="/account">Account Settings</Link>
-          <Link className="underline underline-offset-4" href="/delete-account">Delete Account / Data Request</Link>
-          <Link className="underline underline-offset-4" href="/support">Support / Help Center</Link>
-          <Link className="underline underline-offset-4" href="/404">404 Page</Link>
-          <Link className="underline underline-offset-4" href="/sitemap.xml">Sitemap</Link>
-        </div>
-      </div>
+      <SiteFooter />
     </div>
   );
 }

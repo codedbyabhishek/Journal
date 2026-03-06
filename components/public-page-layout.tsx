@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
+import SiteFooter from '@/components/site-footer';
 
 interface PublicPageLayoutProps {
   title: string;
@@ -20,6 +21,7 @@ export default function PublicPageLayout({ title, description, children }: Publi
         {description ? <p className="mb-8 text-muted-foreground">{description}</p> : null}
         <div className="space-y-5 rounded-xl border border-border bg-card p-5 sm:p-7">{children}</div>
       </div>
+      <SiteFooter />
     </main>
   );
 }

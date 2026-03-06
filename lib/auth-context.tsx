@@ -20,6 +20,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AUTH_API_TIMEOUT_MS = 12000;
 
 async function parseApiError(res: Response, fallback: string): Promise<string> {
   try {
@@ -30,6 +31,20 @@ async function parseApiError(res: Response, fallback: string): Promise<string> {
   }
 }
 
+async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = AUTH_API_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshSession = async () => {
     try {
-      const res = await fetch('/api/auth/me', {
+      const res = await fetchWithTimeout('/api/auth/me', {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',
@@ -69,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetchWithTimeout('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -88,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signup = async (name: string, email: string, password: string) => {
-    const res = await fetch('/api/auth/signup', {
+    const res = await fetchWithTimeout('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -107,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    const res = await fetch('/api/auth/logout', {
+    const res = await fetchWithTimeout('/api/auth/logout', {
       method: 'POST',
       credentials: 'include',
     });

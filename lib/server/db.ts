@@ -1,6 +1,7 @@
 import mysql, { Pool } from 'mysql2/promise';
 
 const DEFAULT_DB_PORT = 3306;
+const DB_CONNECT_TIMEOUT_MS = 10000;
 
 declare global {
   // eslint-disable-next-line no-var
@@ -35,6 +36,9 @@ export function getDbPool(): Pool {
     password,
     database,
     port,
+    connectTimeout: DB_CONNECT_TIMEOUT_MS,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
