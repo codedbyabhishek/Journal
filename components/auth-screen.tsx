@@ -31,7 +31,7 @@ export default function AuthScreen() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-background p-4 sm:p-8">
+    <div className="min-h-screen w-full bg-background p-4 sm:p-8 overflow-auto">
       <div className="mx-auto max-w-6xl h-full min-h-[calc(100vh-2rem)] sm:min-h-[calc(100vh-4rem)] grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-border bg-card relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-background pointer-events-none" />

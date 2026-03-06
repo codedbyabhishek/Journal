@@ -32,7 +32,7 @@ export default function TradeLog() {
   }, [trades, sortBy, filterSetup]);
 
   return (
-    <div className="w-full min-h-screen flex flex-col gap-3 sm:gap-4 lg:gap-6 p-2 sm:p-4 lg:p-6 overflow-hidden">
+    <div className="w-full flex flex-col gap-3 sm:gap-4 lg:gap-6 p-2 sm:p-4 lg:p-6 min-w-0">
       <div className="space-y-1">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">Trade Log</h1>
         <p className="text-xs sm:text-sm lg:text-base text-muted-foreground">View and manage all your trades</p>
@@ -80,9 +80,10 @@ export default function TradeLog() {
       ) : (
         <>
           {/* Desktop Table */}
-          <div className="hidden md:block w-full overflow-x-auto">
-            <Card className="bg-card border-border">
-              <table className="w-full min-w-max">
+          <div className="hidden md:block w-full min-w-0">
+            <Card className="bg-card border-border overflow-hidden">
+              <div className="w-full overflow-x-auto">
+              <table className="w-full min-w-[1100px] border-collapse">
                 <thead>
                   <tr className="border-b border-border bg-secondary">
                     <th className="text-left px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-foreground whitespace-nowrap">Date</th>
@@ -104,8 +105,8 @@ export default function TradeLog() {
                     <tr key={trade.id} className="border-b border-border hover:bg-secondary transition-colors">
                       <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-xs sm:text-sm text-foreground">{trade.date}</td>
                       <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-xs sm:text-sm text-muted-foreground">{trade.dayOfWeek.slice(0, 3)}</td>
-                      <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium text-foreground">{trade.symbol}</td>
-                      <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-xs sm:text-sm text-foreground truncate" title={trade.setupName}>{trade.setupName}</td>
+                      <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">{trade.symbol}</td>
+                      <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-xs sm:text-sm text-foreground max-w-[220px] truncate" title={trade.setupName}>{trade.setupName}</td>
                       <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-xs sm:text-sm">
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${trade.position === 'Buy' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                           {trade.position === 'Buy' ? 'B' : 'S'}
@@ -142,6 +143,7 @@ export default function TradeLog() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </Card>
           </div>
 
@@ -160,37 +162,37 @@ export default function TradeLog() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
+                  <div className="grid grid-cols-2 gap-2 text-sm min-w-0">
+                    <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">Entry</p>
-                      <p className="font-semibold text-foreground">{trade.entryPrice ? `${CURRENCY_SYMBOLS[trade.currency] || '$'}${trade.entryPrice.toFixed(2)}` : 'N/A'}</p>
+                      <p className="font-semibold text-foreground truncate">{trade.entryPrice ? `${CURRENCY_SYMBOLS[trade.currency] || '$'}${trade.entryPrice.toFixed(2)}` : 'N/A'}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">Exit</p>
-                      <p className="font-semibold text-foreground">{trade.exitPrice ? `${CURRENCY_SYMBOLS[trade.currency] || '$'}${trade.exitPrice.toFixed(2)}` : 'N/A'}</p>
+                      <p className="font-semibold text-foreground truncate">{trade.exitPrice ? `${CURRENCY_SYMBOLS[trade.currency] || '$'}${trade.exitPrice.toFixed(2)}` : 'N/A'}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">Setup</p>
-                      <p className="font-semibold text-foreground text-xs">{trade.setupName}</p>
+                      <p className="font-semibold text-foreground text-xs truncate" title={trade.setupName}>{trade.setupName}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">Confidence</p>
                       <p className="font-semibold text-foreground">{trade.confidence}/10</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
-                    <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-border min-w-0">
+                    <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">Net P&L ({trade.currency || 'USD'})</p>
-                      <p className={`font-bold text-sm ${trade.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      <p className={`font-bold text-sm truncate ${trade.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                         {CURRENCY_SYMBOLS[trade.currency] || '$'}{trade.pnl.toFixed(2)}
                       </p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">R-Factor</p>
                       <p className="font-bold text-sm text-primary">{trade.rFactor.toFixed(2)}R</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">Result</p>
                       {/* W/L derived from P&L */}
                       <p className={`font-bold text-sm ${

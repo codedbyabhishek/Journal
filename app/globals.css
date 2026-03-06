@@ -158,10 +158,11 @@
 }
 
 @layer base {
-  /* HTML & Body - Prevent double scrollbars */
+  /* HTML & Body - Allow page scroll on mobile/tablet while avoiding horizontal overflow */
   html, body {
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   html {

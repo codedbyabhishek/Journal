@@ -25,7 +25,7 @@ export default function MobileNav({ currentPage, onPageChange }: MobileNavProps)
   const [showThemeMenu, setShowThemeMenu] = React.useState(false);
 
   return (
-    <nav className="bg-sidebar border-t border-border flex overflow-x-auto safe-area-inset-bottom">
+    <nav className="bg-sidebar/95 backdrop-blur border-t border-border flex overflow-x-auto min-h-[72px] pb-[max(env(safe-area-inset-bottom),0px)]">
       {menuItems.map((item) => {
         const Icon = item.icon;
         const isActive = currentPage === item.id;
