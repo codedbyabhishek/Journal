@@ -15,6 +15,12 @@ interface PendingTrade {
 const PENDING_TRADES_STORE = 'pending-trades';
 const MAX_RETRIES = 3;
 
+type SyncServiceWorkerRegistration = ServiceWorkerRegistration & {
+  sync?: {
+    register: (tag: string) => Promise<void>;
+  };
+};
+
 export async function initOfflineSync() {
   if (typeof window === 'undefined') return;
 
@@ -33,8 +39,10 @@ async function handleOnline() {
   try {
     await syncPendingTrades();
     if ('serviceWorker' in navigator) {
-      const reg = await navigator.serviceWorker.ready;
-      reg.sync.register('sync-trades');
+      const reg = (await navigator.serviceWorker.ready) as SyncServiceWorkerRegistration;
+      if (reg.sync?.register) {
+        await reg.sync.register('sync-trades');
+      }
     }
   } catch (error) {
     console.error('[Offline Sync] Sync failed:', error);
@@ -57,15 +65,13 @@ export async function addPendingTrade(trade: any): Promise<string> {
     request.onsuccess = () => {
       const db = request.result;
       try {
-        let objectStore;
         if (!db.objectStoreNames.contains(PENDING_TRADES_STORE)) {
-          // Create store if it doesn't exist
-          const upgradeTx = request.transaction;
-          objectStore = upgradeTx.objectStore(PENDING_TRADES_STORE);
-        } else {
-          const tx = db.transaction([PENDING_TRADES_STORE], 'readwrite');
-          objectStore = tx.objectStore(PENDING_TRADES_STORE);
+          reject(new Error('Pending trades store not initialized'));
+          return;
         }
+
+        const tx = db.transaction([PENDING_TRADES_STORE], 'readwrite');
+        const objectStore = tx.objectStore(PENDING_TRADES_STORE);
 
         const id = `pending-${Date.now()}`;
         const pending: PendingTrade = {

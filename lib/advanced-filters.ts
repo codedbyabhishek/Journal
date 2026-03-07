@@ -38,7 +38,11 @@ export function applyFilters(trades: Trade[], filters: TradeFilters): Trade[] {
   return trades.filter((trade) => {
     // Date range filter
     if (filters.dateRange) {
-      const tradeDate = new Date(trade.entryDate).getTime();
+      const tradeDateValue = trade.date || trade.entryDate;
+      if (!tradeDateValue) {
+        return false;
+      }
+      const tradeDate = new Date(tradeDateValue).getTime();
       const startDate = new Date(filters.dateRange.start).getTime();
       const endDate = new Date(filters.dateRange.end).getTime();
       if (tradeDate < startDate || tradeDate > endDate) {
@@ -79,8 +83,15 @@ export function applyFilters(trades: Trade[], filters: TradeFilters): Trade[] {
 
     // Risk-Reward filter
     if (filters.minRiskReward !== undefined) {
+      if (
+        trade.exitPrice === undefined ||
+        trade.entryPrice === undefined ||
+        trade.stopLoss === undefined
+      ) {
+        return false;
+      }
       const riskReward = Math.abs(
-        (trade.exitPrice - trade.entryPrice) / (trade.stopLossPrice - trade.entryPrice)
+        (trade.exitPrice - trade.entryPrice) / (trade.stopLoss - trade.entryPrice)
       ) || 0;
       if (riskReward < filters.minRiskReward) {
         return false;
@@ -89,7 +100,8 @@ export function applyFilters(trades: Trade[], filters: TradeFilters): Trade[] {
 
     // Emotion filter
     if (filters.emotions && filters.emotions.length > 0) {
-      if (!trade.emotion || !filters.emotions.includes(trade.emotion)) {
+      const emotion = trade.emotionEntry || trade.entryEmotion || trade.emotionExit || trade.exitEmotion;
+      if (!emotion || !filters.emotions.includes(emotion)) {
         return false;
       }
     }
@@ -100,8 +112,12 @@ export function applyFilters(trades: Trade[], filters: TradeFilters): Trade[] {
       const searchableFields = [
         trade.symbol,
         trade.setupName,
-        trade.notes,
-        trade.emotion,
+        trade.preNotes,
+        trade.postNotes,
+        trade.emotionEntry,
+        trade.entryEmotion,
+        trade.emotionExit,
+        trade.exitEmotion,
       ]
         .filter(Boolean)
         .map((f) => String(f).toLowerCase());

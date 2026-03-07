@@ -29,7 +29,12 @@ export function analyzeEmotionImpact(trades: Trade[]): EmotionImpact[] {
   const emotionGroups: Record<string, Trade[]> = {};
 
   trades.forEach((trade) => {
-    const emotion = trade.emotion || 'neutral';
+    const emotion =
+      trade.emotionEntry ||
+      trade.entryEmotion ||
+      trade.emotionExit ||
+      trade.exitEmotion ||
+      'neutral';
     if (!emotionGroups[emotion]) {
       emotionGroups[emotion] = [];
     }
@@ -85,18 +90,21 @@ export function calculateSentimentScore(text: string): number {
  */
 export function calculateSentimentTrends(trades: Trade[]): SentimentTrend[] {
   const sortedTrades = [...trades].sort(
-    (a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
+    (a, b) =>
+      new Date(a.date || a.entryDate || 0).getTime() -
+      new Date(b.date || b.entryDate || 0).getTime(),
   );
 
   const trends: Record<string, { sentiments: number[]; pnl: number; count: number }> = {};
 
   sortedTrades.forEach((trade) => {
-    const date = trade.entryDate.split('T')[0];
+    const tradeDate = trade.date || trade.entryDate || new Date().toISOString();
+    const date = tradeDate.split('T')[0];
     if (!trends[date]) {
       trends[date] = { sentiments: [], pnl: 0, count: 0 };
     }
 
-    const sentiment = calculateSentimentScore(trade.notes || '');
+    const sentiment = calculateSentimentScore([trade.preNotes, trade.postNotes].filter(Boolean).join(' '));
     trends[date].sentiments.push(sentiment);
     trends[date].pnl += calculatePnL(trade);
     trends[date].count++;
@@ -146,7 +154,7 @@ export function getEmotionalInsights(trades: Trade[]): string[] {
   // Emotional control
   const positiveEmotions = ['confident', 'focused', 'calm', 'disciplined'];
   const positiveTradesCount = trades.filter((t) => {
-    const emotion = t.emotion || '';
+    const emotion = t.emotionEntry || t.entryEmotion || t.emotionExit || t.exitEmotion || '';
     return positiveEmotions.some((e) => emotion.toLowerCase().includes(e));
   }).length;
 
@@ -166,9 +174,10 @@ export function correlateNotesWithPerformance(trades: Trade[]): { keyword: strin
   const keywords: Record<string, { pnl: number; count: number }> = {};
 
   trades.forEach((trade) => {
-    if (!trade.notes) return;
+    const notes = [trade.preNotes, trade.postNotes].filter(Boolean).join(' ').trim();
+    if (!notes) return;
 
-    const words = trade.notes.toLowerCase().split(/\s+/).slice(0, 10); // First 10 words
+    const words = notes.toLowerCase().split(/\s+/).slice(0, 10); // First 10 words
     const pnl = calculatePnL(trade);
 
     words.forEach((word) => {

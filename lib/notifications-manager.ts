@@ -230,11 +230,13 @@ export async function getUnreadNotifications(): Promise<Notification[]> {
       const tx = db.transaction(['notifications'], 'readonly');
       const store = tx.objectStore('notifications');
       const index = store.index('read');
-      const getAllRequest = index.getAll(false);
+      const getAllRequest = index.getAll();
 
       getAllRequest.onerror = () => resolve([]);
       getAllRequest.onsuccess = () => {
-        const notifications = getAllRequest.result as Notification[];
+        const notifications = (getAllRequest.result as Notification[]).filter(
+          (notification) => !notification.read,
+        );
         resolve(notifications.sort((a, b) => b.timestamp - a.timestamp));
       };
     };

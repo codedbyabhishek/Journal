@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ResultSetHeader } from 'mysql2';
 import { dbExecute, dbQuery } from '@/lib/server/db';
 import {
-  cleanupExpiredSessions,
   createSession,
   hashPassword,
   setSessionCookie,
@@ -21,7 +20,7 @@ export async function POST(request: NextRequest) {
     const normalizedEmail = emailRaw.trim().toLowerCase();
     const ip = getClientIp(request);
 
-    const byIpLimit = consumeRateLimit({
+    const byIpLimit = await consumeRateLimit({
       prefix: 'auth-signup-ip',
       identifier: ip,
       windowMs: 30 * 60 * 1000,
@@ -36,7 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const byIdentityLimit = consumeRateLimit({
+    const byIdentityLimit = await consumeRateLimit({
       prefix: 'auth-signup-identity',
       identifier: `${ip}:${normalizedEmail || 'unknown'}`,
       windowMs: 30 * 60 * 1000,
@@ -56,8 +55,6 @@ export async function POST(request: NextRequest) {
     if (!validated.valid) {
       return jsonError(validated.error, 400);
     }
-
-    await cleanupExpiredSessions();
 
     const existing = await dbQuery<{ id: number }[]>(
       'SELECT id FROM users WHERE email = ? LIMIT 1',

@@ -153,7 +153,7 @@ export default function Analytics() {
   const drawdownData = useMemo(() => {
     let cumulativePnL = 0;
     let runningMax = 0;
-    const data = [];
+    const data: Array<{ date: string; drawdown: number; balance: number }> = [];
 
     trades.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).forEach(trade => {
       cumulativePnL += getTradeBasePnL(trade);
@@ -555,9 +555,9 @@ export default function Analytics() {
                           borderRadius: '8px',
                           fontSize: '12px',
                         }}
-                        formatter={(value: any, name: string) => {
+                        formatter={(value: any, name?: string) => {
                           if (name === 'avgPnl') return [`${baseCurrencySymbol}${value}`, 'Avg P&L'];
-                          return [value, name];
+                          return [value, name || 'Value'];
                         }}
                         labelFormatter={(label) => `Confidence: ${label}`}
                       />

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dbQuery } from '@/lib/server/db';
 import {
-  cleanupExpiredSessions,
   createSession,
   setSessionCookie,
   validateLoginInput,
@@ -27,7 +26,7 @@ export async function POST(request: NextRequest) {
     const normalizedEmail = emailRaw.trim().toLowerCase();
     const ip = getClientIp(request);
 
-    const byIpLimit = consumeRateLimit({
+    const byIpLimit = await consumeRateLimit({
       prefix: 'auth-login-ip',
       identifier: ip,
       windowMs: 10 * 60 * 1000,
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const byIdentityLimit = consumeRateLimit({
+    const byIdentityLimit = await consumeRateLimit({
       prefix: 'auth-login-identity',
       identifier: `${ip}:${normalizedEmail || 'unknown'}`,
       windowMs: 10 * 60 * 1000,
@@ -62,8 +61,6 @@ export async function POST(request: NextRequest) {
     if (!validated.valid) {
       return jsonError(validated.error, 400);
     }
-
-    await cleanupExpiredSessions();
 
     const rows = await dbQuery<UserRow[]>(
       'SELECT id, email, name, password_hash FROM users WHERE email = ? LIMIT 1',

@@ -16,6 +16,15 @@ export function ServiceWorkerRegister() {
           void registration.unregister();
         });
       });
+      if ('caches' in window) {
+        void caches.keys().then((keys) => {
+          keys
+            .filter((key) => key.startsWith('trading-diary'))
+            .forEach((key) => {
+              void caches.delete(key);
+            });
+        });
+      }
       return;
     }
 

@@ -88,6 +88,10 @@ export function findSimilarTrades(
  */
 export function calculateTradeSimilarity(trade1: Trade, trade2: Trade): number {
   let similarity = 0;
+  const entry1 = trade1.entryPrice ?? 0;
+  const entry2 = trade2.entryPrice ?? 0;
+  const exit1 = trade1.exitPrice ?? entry1;
+  const exit2 = trade2.exitPrice ?? entry2;
 
   // Setup match (40 points)
   if (trade1.setupName === trade2.setupName) {
@@ -100,7 +104,8 @@ export function calculateTradeSimilarity(trade1: Trade, trade2: Trade): number {
   }
 
   // Entry/Exit price proximity (20 points)
-  const priceDiffPercent = Math.abs(trade1.entryPrice - trade2.entryPrice) / trade1.entryPrice;
+  const priceDiffPercent =
+    entry1 === 0 ? 1 : Math.abs(entry1 - entry2) / Math.abs(entry1);
   if (priceDiffPercent < 0.01) {
     similarity += 20;
   } else if (priceDiffPercent < 0.05) {
@@ -110,8 +115,10 @@ export function calculateTradeSimilarity(trade1: Trade, trade2: Trade): number {
   }
 
   // Risk-Reward similarity (20 points)
-  const rr1 = Math.abs(trade1.exitPrice - trade1.entryPrice) / (trade1.stopLossPrice - trade1.entryPrice);
-  const rr2 = Math.abs(trade2.exitPrice - trade2.entryPrice) / (trade2.stopLossPrice - trade2.entryPrice);
+  const rr1Denominator = trade1.stopLoss - entry1;
+  const rr2Denominator = trade2.stopLoss - entry2;
+  const rr1 = rr1Denominator === 0 ? 0 : Math.abs(exit1 - entry1) / Math.abs(rr1Denominator);
+  const rr2 = rr2Denominator === 0 ? 0 : Math.abs(exit2 - entry2) / Math.abs(rr2Denominator);
   const rrDiff = Math.abs(rr1 - rr2);
   if (rrDiff < 0.5) {
     similarity += 20;
@@ -128,6 +135,8 @@ export function calculateTradeSimilarity(trade1: Trade, trade2: Trade): number {
 export function compareTrades(trade1: Trade, trade2: Trade): TradeComparison {
   const similarities: string[] = [];
   const differences: string[] = [];
+  const entry1 = trade1.entryPrice ?? 0;
+  const entry2 = trade2.entryPrice ?? 0;
 
   if (trade1.setupName === trade2.setupName) {
     similarities.push(`Same setup: ${trade1.setupName}`);
@@ -141,11 +150,11 @@ export function compareTrades(trade1: Trade, trade2: Trade): TradeComparison {
     differences.push(`Different symbols: ${trade1.symbol} vs ${trade2.symbol}`);
   }
 
-  const priceDiff = Math.abs(trade1.entryPrice - trade2.entryPrice);
+  const priceDiff = Math.abs(entry1 - entry2);
   if (priceDiff < 1) {
-    similarities.push(`Similar entry price: $${trade1.entryPrice.toFixed(2)} vs $${trade2.entryPrice.toFixed(2)}`);
+    similarities.push(`Similar entry price: $${entry1.toFixed(2)} vs $${entry2.toFixed(2)}`);
   } else {
-    differences.push(`Different entry price: $${trade1.entryPrice.toFixed(2)} vs $${trade2.entryPrice.toFixed(2)}`);
+    differences.push(`Different entry price: $${entry1.toFixed(2)} vs $${entry2.toFixed(2)}`);
   }
 
   const pnl1 = calculatePnL(trade1);

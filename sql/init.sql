@@ -98,3 +98,14 @@ CREATE TABLE IF NOT EXISTS user_settings (
   KEY idx_user_settings_user (user_id),
   CONSTRAINT fk_user_settings_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS auth_rate_limits (
+  key_name VARCHAR(191) NOT NULL,
+  requests INT UNSIGNED NOT NULL DEFAULT 0,
+  window_started_at DATETIME NOT NULL,
+  blocked_until DATETIME NULL,
+  updated_at DATETIME NOT NULL,
+  PRIMARY KEY (key_name),
+  KEY idx_auth_rate_limits_updated_at (updated_at),
+  KEY idx_auth_rate_limits_blocked_until (blocked_until)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

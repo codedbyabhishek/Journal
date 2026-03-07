@@ -74,7 +74,7 @@ export default function WeeklyReview() {
         : 0;
 
       // Setup stats
-      const setupStats = new Map<string, { count: number; pnl: number; winRate: number }>();
+      const setupStats = new Map<string, { count: number; pnl: number; wins: number; winRate: number }>();
       periodTrades.forEach(trade => {
         const existing = setupStats.get(trade.setupName) || { count: 0, pnl: 0, wins: 0 };
         const isWin = trade.pnl > 0;

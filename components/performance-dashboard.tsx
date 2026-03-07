@@ -138,7 +138,7 @@ export function PerformanceDashboard({ trades }: PerformanceDashboardProps) {
                 tick={{ fontSize: 12 }}
               />
               <Tooltip
-                formatter={(value: any, name: string) => {
+                formatter={(value: any, name?: string) => {
                   if (name === 'pnl' || name === 'target') {
                     return renderCurrencyTooltip(value);
                   }
