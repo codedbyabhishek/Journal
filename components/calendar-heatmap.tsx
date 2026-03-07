@@ -41,7 +41,7 @@ export function CalendarHeatMap({ trades, month = new Date() }: CalendarHeatMapP
 
     return allDays.map((date) => {
       const dateStr = format(date, 'yyyy-MM-dd');
-      const dayTrades = trades.filter((t) => format(new Date(t.entryDate), 'yyyy-MM-dd') === dateStr);
+      const dayTrades = trades.filter((t) => format(new Date(t.date), 'yyyy-MM-dd') === dateStr);
 
       const pnl = dayTrades.reduce((sum, t) => sum + calculatePnL(t), 0);
       const winningTrades = dayTrades.filter((t) => calculatePnL(t) > 0);

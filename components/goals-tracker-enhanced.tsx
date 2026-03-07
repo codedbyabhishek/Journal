@@ -49,15 +49,15 @@ export function GoalsTracker({ trades }: GoalsTrackerProps) {
       let relevantTrades: Trade[] = [];
 
       if (goal.type === 'daily' && goal.period === today) {
-        relevantTrades = trades.filter((t) => t.entryDate.startsWith(today));
+        relevantTrades = trades.filter((t) => (t.entryDate || t.date).startsWith(today));
       } else if (goal.type === 'weekly' && goal.period === currentWeek) {
         const weekEnd = format(endOfWeek(now), 'yyyy-MM-dd');
         relevantTrades = trades.filter((t) => {
-          const tDate = t.entryDate.split('T')[0];
+          const tDate = (t.entryDate || t.date).split('T')[0];
           return tDate >= currentWeek && tDate <= weekEnd;
         });
       } else if (goal.type === 'monthly' && goal.period === currentMonth) {
-        relevantTrades = trades.filter((t) => t.entryDate.startsWith(currentMonth));
+        relevantTrades = trades.filter((t) => (t.entryDate || t.date).startsWith(currentMonth));
       }
 
       const actualAmount = relevantTrades.reduce((sum, t) => sum + calculatePnL(t), 0);

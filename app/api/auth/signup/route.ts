@@ -2,26 +2,67 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ResultSetHeader } from 'mysql2';
 import { dbExecute, dbQuery } from '@/lib/server/db';
 import {
-  cleanupExpiredSessions,
-  createSession,
+  createEmailVerificationToken,
   hashPassword,
-  setSessionCookie,
   validateSignupInput,
 } from '@/lib/server/auth';
 import { jsonError } from '@/lib/server/http';
+import { toServerErrorResponse } from '@/lib/server/error-map';
+import { consumeRateLimit, getClientIp } from '@/lib/server/rate-limit';
+import {
+  buildVerifyEmailLink,
+  maybeExposeTokenForDev,
+  sendAuthMail,
+} from '@/lib/server/auth-mail';
+import { betaAccessDeniedMessage, isEmailAllowedForBeta } from '@/lib/server/release-ring';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const emailRaw = typeof body?.email === 'string' ? body.email : '';
+    const normalizedEmail = emailRaw.trim().toLowerCase();
+    const ip = getClientIp(request);
+
+    const byIpLimit = await consumeRateLimit({
+      prefix: 'auth-signup-ip',
+      identifier: ip,
+      windowMs: 30 * 60 * 1000,
+      maxRequests: 10,
+      blockDurationMs: 30 * 60 * 1000,
+    });
+    if (!byIpLimit.allowed) {
+      return jsonError(
+        'Too many signup attempts. Please wait and try again.',
+        429,
+        { 'Retry-After': String(byIpLimit.retryAfterSeconds || 60) }
+      );
+    }
+
+    const byIdentityLimit = await consumeRateLimit({
+      prefix: 'auth-signup-identity',
+      identifier: `${ip}:${normalizedEmail || 'unknown'}`,
+      windowMs: 30 * 60 * 1000,
+      maxRequests: 5,
+      blockDurationMs: 30 * 60 * 1000,
+    });
+    if (!byIdentityLimit.allowed) {
+      return jsonError(
+        'Too many signup attempts. Please wait and try again.',
+        429,
+        { 'Retry-After': String(byIdentityLimit.retryAfterSeconds || 60) }
+      );
+    }
+
     const validated = validateSignupInput(body || {});
 
     if (!validated.valid) {
       return jsonError(validated.error, 400);
     }
-
-    await cleanupExpiredSessions();
+    if (!isEmailAllowedForBeta(validated.data.email)) {
+      return jsonError(betaAccessDeniedMessage(), 403);
+    }
 
     const existing = await dbQuery<{ id: number }[]>(
       'SELECT id FROM users WHERE email = ? LIMIT 1',
@@ -41,21 +82,27 @@ export async function POST(request: NextRequest) {
     )) as ResultSetHeader;
 
     const userId = Number(result.insertId);
-    const sessionToken = await createSession(userId);
-    await setSessionCookie(sessionToken);
+    const verifyToken = await createEmailVerificationToken(userId);
+    const verifyLink = buildVerifyEmailLink(verifyToken);
+
+    await sendAuthMail({
+      to: validated.data.email,
+      subject: 'Verify your Trading Journal account',
+      text: `Verify your account using this link: ${verifyLink}`,
+      html: `<p>Verify your account by clicking the link below:</p><p><a href="${verifyLink}">${verifyLink}</a></p>`,
+    });
 
     return NextResponse.json(
       {
-        user: {
-          id: userId,
-          email: validated.data.email,
-          name: validated.data.name,
-        },
+        user: null,
+        requiresEmailVerification: true,
+        devVerificationToken: maybeExposeTokenForDev(verifyToken),
       },
       { status: 201 }
     );
   } catch (error) {
     console.error('[auth/signup] error', error);
-    return jsonError('Failed to create account.', 500);
+    const mapped = toServerErrorResponse(error, 'Failed to create account.');
+    return jsonError(mapped.message, mapped.status);
   }
 }

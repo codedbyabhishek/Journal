@@ -51,14 +51,14 @@ export function getDbPool(): Pool {
 
 export async function dbQuery<T = unknown>(
   sql: string,
-  values: unknown[] = []
+  values: any[] = []
 ): Promise<T> {
   const pool = getDbPool();
   const [rows] = await pool.query(sql, values);
   return rows as T;
 }
 
-export async function dbExecute(sql: string, values: unknown[] = []) {
+export async function dbExecute(sql: string, values: any[] = []) {
   const pool = getDbPool();
   const [result] = await pool.execute(sql, values);
   return result;

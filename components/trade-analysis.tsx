@@ -169,7 +169,7 @@ export function TradeAnalysis({ trades }: TradeAnalysisProps) {
                     <div className="text-left flex-1">
                       <div>{trade.setupName} - {trade.symbol}</div>
                       <div className="text-xs text-gray-500">
-                        ${trade.entryPrice.toFixed(2)} → ${trade.exitPrice.toFixed(2)} {' '}
+                        ${trade.entryPrice?.toFixed(2) ?? 'N/A'} → ${trade.exitPrice?.toFixed(2) ?? 'N/A'} {' '}
                         <span className={calculatePnL(trade) >= 0 ? 'text-green-600' : 'text-red-600'}>
                           (${calculatePnL(trade).toFixed(2)})
                         </span>

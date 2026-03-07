@@ -30,6 +30,10 @@ export type EmotionTag = 'Calm' | 'Confident' | 'Anxious' | 'Fearful' | 'Greedy'
 export interface Trade {
   id: string;
   date: string;
+  // Legacy alias retained for backward compatibility in older components.
+  entryDate?: string;
+  // Legacy alias retained for backward compatibility in older components.
+  exitDate?: string;
   dayOfWeek: string;
   symbol: string;
   tradeType: 'Intraday' | 'Swing' | 'Scalping' | 'Positional';
@@ -61,7 +65,7 @@ export interface Trade {
   postNotes: string;
   beforeTradeScreenshot?: string;
   afterExitScreenshot?: string;
-  mistakeTag?: 'Overtrading' | 'Early exit' | 'Late entry' | 'SL hunt fear' | 'Greed' | 'No mistake (good loss)';
+  mistakeTag?: '' | 'Overtrading' | 'Early exit' | 'Late entry' | 'SL hunt fear' | 'Greed' | 'No mistake (good loss)';
   timeFrame?: string;
   limit?: string;
   exit?: string;
@@ -86,9 +90,13 @@ export interface Trade {
   
   // Emotional state during trade entry
   emotionEntry?: EmotionTag;
+  // Legacy alias retained for backward compatibility in older components.
+  entryEmotion?: EmotionTag;
   
   // Emotional state during trade exit
   emotionExit?: EmotionTag;
+  // Legacy alias retained for backward compatibility in older components.
+  exitEmotion?: EmotionTag;
   
   // Planned R target (for comparing actual vs planned)
   plannedRTarget?: number;
@@ -120,7 +128,7 @@ export interface TradeFormData {
   postNotes: string;
   beforeTradeScreenshot?: string;
   afterExitScreenshot?: string;
-  mistakeTag?: 'Overtrading' | 'Early exit' | 'Late entry' | 'SL hunt fear' | 'Greed' | 'No mistake (good loss)';
+  mistakeTag?: '' | 'Overtrading' | 'Early exit' | 'Late entry' | 'SL hunt fear' | 'Greed' | 'No mistake (good loss)';
   exitRFactor?: string;
   timeFrame: string;
   // DEPRECATED: W/L is now auto-derived from P&L

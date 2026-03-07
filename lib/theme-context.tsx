@@ -57,7 +57,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (themePreference === 'system') {
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       }
-      return themePreference;
+      return themePreference === 'cyberpunk' ? 'dark' : themePreference;
     };
 
     const resolved = resolveTheme(savedTheme);

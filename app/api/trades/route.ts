@@ -22,22 +22,50 @@ function parseTradeRows(rows: TradeRow[]) {
     .filter(Boolean);
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return jsonError('Unauthorized', 401);
     }
 
+    const searchParams = request.nextUrl.searchParams;
+    const parsedLimit = Number(searchParams.get('limit') || 200);
+    const parsedOffset = Number(searchParams.get('offset') || 0);
+
+    const limit = Number.isFinite(parsedLimit)
+      ? Math.min(Math.max(Math.floor(parsedLimit), 1), 500)
+      : 200;
+    const offset = Number.isFinite(parsedOffset)
+      ? Math.max(Math.floor(parsedOffset), 0)
+      : 0;
+
     const rows = await dbQuery<TradeRow[]>(
       `SELECT trade_id, trade_json
        FROM trades
        WHERE user_id = ?
-       ORDER BY trade_date DESC, updated_at DESC`,
+       ORDER BY trade_date DESC, updated_at DESC
+       LIMIT ? OFFSET ?`,
+      [user.id, limit, offset]
+    );
+
+    const countRows = await dbQuery<{ total: number }[]>(
+      'SELECT COUNT(*) AS total FROM trades WHERE user_id = ?',
       [user.id]
     );
 
-    return NextResponse.json({ trades: parseTradeRows(rows) });
+    const total = Number(countRows[0]?.total || 0);
+    const trades = parseTradeRows(rows);
+
+    return NextResponse.json({
+      trades,
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: offset + trades.length < total,
+      },
+    });
   } catch (error) {
     console.error('[trades/get] error', error);
     return jsonError('Failed to load trades.', 500);

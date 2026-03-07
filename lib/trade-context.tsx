@@ -21,9 +21,21 @@ interface TradeContextType {
 export const TradeContext = createContext<TradeContextType | undefined>(undefined);
 
 function normalizeTrade(trade: any): Trade {
+  const emotionEntry = trade.emotionEntry ?? trade.entryEmotion;
+  const emotionExit = trade.emotionExit ?? trade.exitEmotion;
+  const normalizedDate = trade.date ?? trade.entryDate;
+  const normalizedExitDate = trade.exitDate ?? normalizedDate;
+
   if (trade.currency && trade.pnlBase !== undefined) {
     return {
       ...trade,
+      date: normalizedDate,
+      entryDate: normalizedDate,
+      exitDate: normalizedExitDate,
+      emotionEntry,
+      emotionExit,
+      entryEmotion: emotionEntry,
+      exitEmotion: emotionExit,
       isWin: trade.pnl > 0,
     };
   }
@@ -34,9 +46,16 @@ function normalizeTrade(trade: any): Trade {
 
   return {
     ...trade,
+    date: normalizedDate,
+    entryDate: normalizedDate,
+    exitDate: normalizedExitDate,
     currency,
     pnlBase,
     exchangeRate,
+    emotionEntry,
+    emotionExit,
+    entryEmotion: emotionEntry,
+    exitEmotion: emotionExit,
     isWin: trade.pnl > 0,
   };
 }
@@ -84,10 +103,28 @@ export function TradeProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const res = await apiRequest('/api/trades', { method: 'GET' });
-        const data = await res.json();
-        const loadedTrades = Array.isArray(data.trades) ? data.trades.map(normalizeTrade) : [];
-        setTrades(loadedTrades);
+        const limit = 500;
+        const maxPages = 20;
+        let offset = 0;
+        let page = 0;
+        const aggregated: Trade[] = [];
+
+        while (page < maxPages) {
+          const res = await apiRequest(`/api/trades?limit=${limit}&offset=${offset}`, { method: 'GET' });
+          const data = await res.json();
+          const batch = Array.isArray(data.trades) ? data.trades.map(normalizeTrade) : [];
+          aggregated.push(...batch);
+
+          const hasMore = Boolean(data?.pagination?.hasMore);
+          if (!hasMore || batch.length === 0) {
+            break;
+          }
+
+          offset += limit;
+          page += 1;
+        }
+
+        setTrades(aggregated);
         setError(null);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to load trades';
@@ -112,6 +149,8 @@ export function TradeProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ trade: normalized }),
       }).catch((err) => {
         console.error('[TradeContext] Failed to save trade:', err);
+        // Rollback optimistic create when persistence fails.
+        setTrades((prev) => prev.filter((t) => t.id !== normalized.id));
         setError(err instanceof Error ? err.message : 'Failed to save trade');
       });
     } catch (err) {
@@ -126,12 +165,20 @@ export function TradeProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Trade ID is required');
       }
 
+      const deletedTrade = trades.find((t) => t.id === id) || null;
       setTrades((prev) => prev.filter((t) => t.id !== id));
 
       void apiRequest(`/api/trades/${encodeURIComponent(id)}`, {
         method: 'DELETE',
       }).catch((err) => {
         console.error('[TradeContext] Failed to delete trade:', err);
+        // Rollback optimistic delete when persistence fails.
+        if (deletedTrade) {
+          setTrades((prev) => {
+            if (prev.some((t) => t.id === deletedTrade.id)) return prev;
+            return [...prev, deletedTrade].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          });
+        }
         setError(err instanceof Error ? err.message : 'Failed to delete trade');
       });
     } catch (err) {
@@ -149,6 +196,7 @@ export function TradeProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Invalid trade data');
       }
 
+      const previousTrade = trades.find((t) => t.id === id) || null;
       const normalized = normalizeTrade(updatedTrade);
       setTrades((prev) => prev.map((t) => (t.id === id ? normalized : t)));
 
@@ -157,6 +205,10 @@ export function TradeProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ trade: normalized }),
       }).catch((err) => {
         console.error('[TradeContext] Failed to update trade:', err);
+        // Rollback optimistic update when persistence fails.
+        if (previousTrade) {
+          setTrades((prev) => prev.map((t) => (t.id === id ? previousTrade : t)));
+        }
         setError(err instanceof Error ? err.message : 'Failed to update trade');
       });
     } catch (err) {
