@@ -14,6 +14,7 @@ import {
   maybeExposeTokenForDev,
   sendAuthMail,
 } from '@/lib/server/auth-mail';
+import { betaAccessDeniedMessage, isEmailAllowedForBeta } from '@/lib/server/release-ring';
 
 export const runtime = 'nodejs';
 
@@ -58,6 +59,9 @@ export async function POST(request: NextRequest) {
 
     if (!validated.valid) {
       return jsonError(validated.error, 400);
+    }
+    if (!isEmailAllowedForBeta(validated.data.email)) {
+      return jsonError(betaAccessDeniedMessage(), 403);
     }
 
     const existing = await dbQuery<{ id: number }[]>(

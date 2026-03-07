@@ -9,6 +9,7 @@ import {
 import { jsonError } from '@/lib/server/http';
 import { toServerErrorResponse } from '@/lib/server/error-map';
 import { consumeRateLimit, getClientIp } from '@/lib/server/rate-limit';
+import { betaAccessDeniedMessage, isEmailAllowedForBeta } from '@/lib/server/release-ring';
 
 export const runtime = 'nodejs';
 
@@ -61,6 +62,9 @@ export async function POST(request: NextRequest) {
 
     if (!validated.valid) {
       return jsonError(validated.error, 400);
+    }
+    if (!isEmailAllowedForBeta(validated.data.email)) {
+      return jsonError(betaAccessDeniedMessage(), 403);
     }
 
     const rows = await dbQuery<UserRow[]>(
