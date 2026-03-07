@@ -1,8 +1,10 @@
 import React from "react"
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
+import Script from 'next/script'
 import { Analytics } from '@vercel/analytics/next'
 import { ErrorBoundary } from '@/components/error-boundary'
+import { ChunkRecovery } from '@/components/chunk-recovery'
 import { ServiceWorkerRegister } from '@/components/service-worker-register'
 import { ThemeProvider } from '@/lib/theme-context'
 import { HydrationBoundary } from '@/components/hydration-boundary'
@@ -56,10 +58,48 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script id="chunk-fallback" strategy="beforeInteractive">
+          {`
+            (function () {
+              var KEY = 'td-early-chunk-reload-once';
+              function shouldRecover(message) {
+                if (!message) return false;
+                var text = String(message).toLowerCase();
+                return text.indexOf('failed to load chunk') !== -1 ||
+                       text.indexOf('loading chunk') !== -1 ||
+                       text.indexOf('chunkloaderror') !== -1 ||
+                       text.indexOf('failed to fetch dynamically imported module') !== -1 ||
+                       text.indexOf('failed to load module script') !== -1;
+              }
+              function recover() {
+                try {
+                  if (sessionStorage.getItem(KEY) === '1') return;
+                  sessionStorage.setItem(KEY, '1');
+                  location.reload();
+                } catch (_) {}
+              }
+              window.addEventListener('error', function (event) {
+                var message = (event && event.message) || (event && event.error && event.error.message) || '';
+                if (shouldRecover(message)) recover();
+              });
+              window.addEventListener('unhandledrejection', function (event) {
+                var reason = event && event.reason;
+                var message = typeof reason === 'string' ? reason : (reason && reason.message) || '';
+                if (shouldRecover(message)) recover();
+              });
+              setTimeout(function () {
+                try { sessionStorage.removeItem(KEY); } catch (_) {}
+              }, 10000);
+            })();
+          `}
+        </Script>
+      </head>
       <body className={`font-sans antialiased`} suppressHydrationWarning>
         <HydrationBoundary>
           <ThemeProvider>
             <ErrorBoundary>
+              <ChunkRecovery />
               <ServiceWorkerRegister />
               {children}
             </ErrorBoundary>

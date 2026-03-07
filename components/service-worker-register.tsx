@@ -11,11 +11,25 @@ export function ServiceWorkerRegister() {
 
     // Default behavior: keep PWA disabled to avoid stale-cache blank screens.
     if (!enablePwa) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        registrations.forEach((registration) => {
-          void registration.unregister();
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) => {
+          registrations.forEach((registration) => {
+            void registration.unregister();
+          });
+          if ('caches' in window) {
+            void caches.keys().then((keys) => {
+              keys.forEach((key) => {
+                if (key.startsWith('trading-diary')) {
+                  void caches.delete(key);
+                }
+              });
+            });
+          }
+        })
+        .catch((error) => {
+          console.warn('[PWA] Failed to cleanup service worker/caches:', error);
         });
-      });
       return;
     }
 
