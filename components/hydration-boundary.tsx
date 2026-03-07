@@ -14,10 +14,14 @@ export function HydrationBoundary({ children }: { children: React.ReactNode }) {
     setIsClient(true);
   }, []);
 
-  // Return empty fragment on server/initial render to prevent hydration mismatch
-  // Once client is fully hydrated, render the actual content
+  // Render a lightweight shell during initial render so users never see a blank page
+  // if hydration/chunks are delayed.
   if (!isClient) {
-    return null;
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
   }
 
   return <>{children}</>;
