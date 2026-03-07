@@ -17,6 +17,36 @@ interface TradeFormProps {
   onSuccess?: () => void;
 }
 
+const PRESET_SETUPS = [
+  'FOMO',
+  'PINBAR',
+  'BULLISH REVERSE PINBAR',
+  'BEARISH REVERSE PINBAR',
+  'PINBAR FAILURE',
+  '0.382 Fib Retracement',
+  '0.702 Fib Retracement',
+  'EMA RESISTANCE',
+  'EMA SUPPORT',
+  'SUPPORT',
+  'RESISTANCE',
+  'LIQUIDITY GRAB',
+  'BREAKOUT',
+  'BREAKDOWN',
+  'REVERSAL',
+  'WEDGE',
+  'TRIANGLE',
+  'DOUBLE TOP',
+  'DOUBLE BOTTOM',
+  'HEAD & SHOULDERS',
+  'TRENDLINE BOUNCE',
+  'MOVING AVERAGE CROSS',
+  'RSI DIVERGENCE',
+  'MACD SIGNAL',
+  'FLAG PATTERN',
+  'CHANNEL BOUNCE',
+  'GAP FILL',
+] as const;
+
 export default function TradeForm({ onSuccess }: TradeFormProps) {
   const { addTrade } = useTrades();
   const { toast } = useToast();
@@ -58,6 +88,7 @@ export default function TradeForm({ onSuccess }: TradeFormProps) {
   // Validation state for enhanced error handling
   const [errors, setErrors] = useState<Partial<Record<keyof TradeFormData, string>>>({});
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [isCustomSetup, setIsCustomSetup] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -71,6 +102,18 @@ export default function TradeForm({ onSuccess }: TradeFormProps) {
     }
     
     setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
+  };
+
+  const handleSetupPresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = e.target.value;
+    if (selected === '__custom__') {
+      setIsCustomSetup(true);
+      setFormData((prev) => ({ ...prev, setupName: '' }));
+      return;
+    }
+
+    setIsCustomSetup(false);
+    setFormData((prev) => ({ ...prev, setupName: selected }));
   };
 
   const handlePasteImage = (type: 'before' | 'after') => async (e: React.ClipboardEvent<HTMLDivElement>) => {
@@ -238,6 +281,7 @@ export default function TradeForm({ onSuccess }: TradeFormProps) {
       clearScreenshot();
       setErrors({});
       setSubmitStatus('success');
+      setIsCustomSetup(false);
 
       // Trigger callback and auto-clear success message
       if (onSuccess) onSuccess();
@@ -347,41 +391,38 @@ export default function TradeForm({ onSuccess }: TradeFormProps) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Setup Name*</label>
-                <select
-                  name="setupName"
-                  value={formData.setupName}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Select a setup</option>
-                  <option value="FOMO">FOMO</option>
-                  <option value="PINBAR">PINBAR</option>
-                  <option value="BULLISH REVERSE PINBAR">BULLISH REVERSE PINBAR</option>
-                  <option value="BEARISH REVERSE PINBAR">BEARISH REVERSE PINBAR</option>
-                  <option value="PINBAR FAILURE">PINBAR FAILURE</option>
-                  <option value="0.382 Fib">0.382 Fib Retracement</option>
-                  <option value="0.702 Fib">0.702 Fib Retracement</option>
-                  <option value="EMA RESISTANCE">EMA RESISTANCE</option>
-                  <option value="EMA SUPPORT">EMA SUPPORT</option>
-                  <option value="SUPPORT">SUPPORT</option>
-                  <option value="RESISTANCE">RESISTANCE</option>
-                  <option value="LIQUIDITY GRAB">LIQUIDITY GRAB</option>
-                  <option value="BREAKOUT">BREAKOUT</option>
-                  <option value="BREAKDOWN">BREAKDOWN</option>
-                  <option value="REVERSAL">REVERSAL</option>
-                  <option value="WEDGE">WEDGE</option>
-                  <option value="TRIANGLE">TRIANGLE</option>
-                  <option value="DOUBLE TOP">DOUBLE TOP</option>
-                  <option value="DOUBLE BOTTOM">DOUBLE BOTTOM</option>
-                  <option value="HEAD & SHOULDERS">HEAD & SHOULDERS</option>
-                  <option value="TRENDLINE BOUNCE">TRENDLINE BOUNCE</option>
-                  <option value="MOVING AVERAGE CROSS">MOVING AVERAGE CROSS</option>
-                  <option value="RSI DIVERGENCE">RSI DIVERGENCE</option>
-                  <option value="MACD SIGNAL">MACD SIGNAL</option>
-                  <option value="FLAG PATTERN">FLAG PATTERN</option>
-                  <option value="CHANNEL BOUNCE">CHANNEL BOUNCE</option>
-                  <option value="GAP FILL">GAP FILL</option>
-                </select>
+                <div className="space-y-2">
+                  <select
+                    value={
+                      isCustomSetup
+                        ? '__custom__'
+                        : PRESET_SETUPS.includes(formData.setupName as (typeof PRESET_SETUPS)[number])
+                        ? formData.setupName
+                        : ''
+                    }
+                    onChange={handleSetupPresetChange}
+                    className="w-full px-3 py-2 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">Select a setup</option>
+                    {PRESET_SETUPS.map((setup) => (
+                      <option key={setup} value={setup}>
+                        {setup}
+                      </option>
+                    ))}
+                    <option value="__custom__">Custom setup...</option>
+                  </select>
+                  {isCustomSetup && (
+                    <input
+                      type="text"
+                      name="setupName"
+                      value={formData.setupName}
+                      onChange={handleInputChange}
+                      placeholder="Type your custom setup name"
+                      className={`w-full px-3 py-2 bg-input border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${errors.setupName ? 'border-red-500' : 'border-border'}`}
+                    />
+                  )}
+                </div>
+                {errors.setupName && <p className="text-xs text-red-500 mt-1">{errors.setupName}</p>}
               </div>
             </div>
 

@@ -17,6 +17,7 @@ interface UserRow {
   email: string;
   name: string | null;
   password_hash: string;
+  email_verified_at: string | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     const rows = await dbQuery<UserRow[]>(
-      'SELECT id, email, name, password_hash FROM users WHERE email = ? LIMIT 1',
+      'SELECT id, email, name, password_hash, email_verified_at FROM users WHERE email = ? LIMIT 1',
       [validated.data.email]
     );
 
@@ -77,6 +78,9 @@ export async function POST(request: NextRequest) {
     if (!passwordOk) {
       return jsonError('Invalid email or password.', 401);
     }
+    if (!user.email_verified_at) {
+      return jsonError('Please verify your email before login.', 403);
+    }
 
     const sessionToken = await createSession(user.id);
     await setSessionCookie(sessionToken);
@@ -86,6 +90,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email,
         name: user.name,
+        emailVerified: true,
       },
     });
   } catch (error) {

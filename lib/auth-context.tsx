@@ -6,6 +6,14 @@ export interface AuthUser {
   id: number;
   email: string;
   name: string | null;
+  emailVerified: boolean;
+}
+
+export interface AuthActionMeta {
+  message?: string;
+  devResetToken?: string;
+  devVerificationToken?: string;
+  requiresEmailVerification?: boolean;
 }
 
 interface AuthContextType {
@@ -13,7 +21,11 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string) => Promise<AuthActionMeta>;
+  verifyEmail: (token: string) => Promise<AuthActionMeta>;
+  resendVerification: (email: string) => Promise<AuthActionMeta>;
+  forgotPassword: (email: string) => Promise<AuthActionMeta>;
+  resetPassword: (token: string, password: string) => Promise<AuthActionMeta>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
   clearError: () => void;
@@ -148,6 +160,95 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await res.json();
     setUser(data.user || null);
     setError(null);
+    return {
+      message: data.message,
+      requiresEmailVerification: Boolean(data.requiresEmailVerification),
+      devVerificationToken:
+        typeof data.devVerificationToken === 'string' ? data.devVerificationToken : undefined,
+    };
+  };
+
+  const verifyEmail = async (token: string) => {
+    const res = await fetchWithTimeout('/api/auth/verify-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ token }),
+    });
+
+    if (!res.ok) {
+      const message = await parseApiError(res, 'Failed to verify email.');
+      setError(message);
+      throw new Error(message);
+    }
+
+    const data = await res.json();
+    setError(null);
+    return { message: data.message };
+  };
+
+  const resendVerification = async (email: string) => {
+    const res = await fetchWithTimeout('/api/auth/resend-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+      const message = await parseApiError(res, 'Failed to resend verification email.');
+      setError(message);
+      throw new Error(message);
+    }
+
+    const data = await res.json();
+    setError(null);
+    return {
+      message: data.message,
+      devVerificationToken:
+        typeof data.devVerificationToken === 'string' ? data.devVerificationToken : undefined,
+    };
+  };
+
+  const forgotPassword = async (email: string) => {
+    const res = await fetchWithTimeout('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+      const message = await parseApiError(res, 'Failed to process password reset request.');
+      setError(message);
+      throw new Error(message);
+    }
+
+    const data = await res.json();
+    setError(null);
+    return {
+      message: data.message,
+      devResetToken: typeof data.devResetToken === 'string' ? data.devResetToken : undefined,
+    };
+  };
+
+  const resetPassword = async (token: string, password: string) => {
+    const res = await fetchWithTimeout('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ token, password }),
+    });
+
+    if (!res.ok) {
+      const message = await parseApiError(res, 'Failed to reset password.');
+      setError(message);
+      throw new Error(message);
+    }
+
+    const data = await res.json();
+    setError(null);
+    return { message: data.message };
   };
 
   const logout = async () => {
@@ -169,7 +270,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearError = () => setError(null);
 
   const value = useMemo(
-    () => ({ user, isLoading, error, login, signup, logout, refreshSession, clearError }),
+    () => ({
+      user,
+      isLoading,
+      error,
+      login,
+      signup,
+      verifyEmail,
+      resendVerification,
+      forgotPassword,
+      resetPassword,
+      logout,
+      refreshSession,
+      clearError,
+    }),
     [user, isLoading, error]
   );
 

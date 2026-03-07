@@ -2,14 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ResultSetHeader } from 'mysql2';
 import { dbExecute, dbQuery } from '@/lib/server/db';
 import {
-  createSession,
+  createEmailVerificationToken,
   hashPassword,
-  setSessionCookie,
   validateSignupInput,
 } from '@/lib/server/auth';
 import { jsonError } from '@/lib/server/http';
 import { toServerErrorResponse } from '@/lib/server/error-map';
 import { consumeRateLimit, getClientIp } from '@/lib/server/rate-limit';
+import {
+  buildVerifyEmailLink,
+  maybeExposeTokenForDev,
+  sendAuthMail,
+} from '@/lib/server/auth-mail';
 
 export const runtime = 'nodejs';
 
@@ -74,16 +78,21 @@ export async function POST(request: NextRequest) {
     )) as ResultSetHeader;
 
     const userId = Number(result.insertId);
-    const sessionToken = await createSession(userId);
-    await setSessionCookie(sessionToken);
+    const verifyToken = await createEmailVerificationToken(userId);
+    const verifyLink = buildVerifyEmailLink(verifyToken);
+
+    await sendAuthMail({
+      to: validated.data.email,
+      subject: 'Verify your Trading Journal account',
+      text: `Verify your account using this link: ${verifyLink}`,
+      html: `<p>Verify your account by clicking the link below:</p><p><a href="${verifyLink}">${verifyLink}</a></p>`,
+    });
 
     return NextResponse.json(
       {
-        user: {
-          id: userId,
-          email: validated.data.email,
-          name: validated.data.name,
-        },
+        user: null,
+        requiresEmailVerification: true,
+        devVerificationToken: maybeExposeTokenForDev(verifyToken),
       },
       { status: 201 }
     );
